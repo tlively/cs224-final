@@ -176,6 +176,38 @@ void end_visit(dag *g, unsigned idx, idx_vec *end_ready, bitmap *end_finished) {
     }
 }
 
+// calculate max starts
+void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
+                 bitmap *start_finished, unsigned max_time) {
+    size_t npreds = dag_npreds(g, idx);
+    unsigned preds[npreds];
+    dag_preds(g, idx, preds);
+    for (size_t i = 0; i < npreds; i++) {
+        unsigned pred = preds[i];
+        size_t nsuccs = dag_nsuccs(g, pred);
+        unsigned succs[nsuccs];
+        dag_succs(g, pred, succs);
+        int succs_complete = 1;
+        unsigned min_max_start = (unsigned) -1;
+        for (size_t j = 0; j < nsuccs; j++) {
+            if (bitmap_get(start_finished, succs[j]) != 1) {
+                succs_complete = 0;
+                break;
+            }
+            min_max_start =
+                (g->nodes.data[succs[j]].max_start < min_max_start) ?
+                g->nodes.data[succs[j]].max_start : min_max_start;
+        }
+        // all successors have calculated max_starts
+        if (succs_complete) {
+            g->nodes.data[pred].max_start =
+                ((max_time < min_max_start) ? max_time : min_max_start) -
+                dag_weight(g, pred);
+            bitmap_set(start_finished, pred, 1);
+            idx_vec_push(start_ready, pred);
+        }
+    }
+}
 
 int dag_build(dag *g, unsigned max_time) {
     assert(g != NULL);
@@ -234,7 +266,25 @@ int dag_build(dag *g, unsigned max_time) {
         }
     }
 
-    // TODO: find max start times
+    // find max start times
+    idx_vec start_ready;
+    if (idx_vec_init(&start_ready, 0) != 0) {
+        return -1;
+    }
+    bitmap *start_finished = bitmap_create(dag_size(g));
+    if (start_finished == NULL) {
+        return -1;
+    }
+    g->nodes.data[dag_sink(g)].max_start = max_time;
+    idx_vec_push(&start_ready, dag_sink(g));
+    bitmap_set(start_finished, dag_sink(g), 1);
+    while (start_ready.size > 0) {
+        unsigned idx;
+        idx_vec_pop(&start_ready, &idx);
+        start_visit(g, idx, &start_ready, start_finished, max_time);
+    }
+    idx_vec_destroy(&start_ready);
+    bitmap_destroy(start_finished);
 
     g->built = 1;
     return 0;
@@ -294,4 +344,10 @@ unsigned dag_min_end(dag *g, unsigned id) {
     assert(g != NULL);
     assert(id < dag_size(g));
     return g->nodes.data[id].min_end;
+}
+
+unsigned dag_max_start(dag *g, unsigned id) {
+    assert(g != NULL);
+    assert(id < dag_size(g));
+    return g->nodes.data[id].max_start;
 }

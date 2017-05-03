@@ -50,7 +50,7 @@ void test_dag(void) {
     assert(j != (unsigned) -1);
     assert(k != (unsigned) -1);
 
-    dag_build(graph, 0);
+    dag_build(graph, 100);
 
     assert(dag_size(graph) == 13);
 
@@ -65,6 +65,10 @@ void test_dag(void) {
     assert(dag_min_end(graph, dag_sink(graph)) == 48);
     assert(dag_min_end(graph, dag_source(graph)) == 0);
     assert(dag_min_end(graph, h) == 26);
+
+    assert(dag_max_start(graph, dag_sink(graph)) == 100);
+    assert(dag_max_start(graph, dag_source(graph)) == 52);
+    assert(dag_max_start(graph, g) == 64);
 
     assert(dag_nsuccs(graph, dag_source(graph)) == 3);
     assert(dag_npreds(graph, dag_source(graph)) == 0);

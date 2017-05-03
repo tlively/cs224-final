@@ -50,4 +50,8 @@ int dag_level(dag *g, unsigned id);
 // given `id'. This should only be called after dag_build.
 unsigned dag_min_end(dag *g, unsigned id);
 
+// return the maximum possible start time of the vertex with the given
+// `id'. This should only be called after dag_build.
+unsigned dag_max_start(dag *g, unsigned id);
+
 #endif // DAG_H
