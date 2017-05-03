@@ -81,12 +81,13 @@ size_t dag_size(dag *g) {
     return g->nodes.size;
 }
 
-int dag_vertex(dag *g, int weight, size_t n_deps, unsigned *deps) {
+unsigned dag_vertex(dag *g, int weight, size_t n_deps, unsigned *deps) {
     assert(g != NULL);
+    assert(n_deps == 0 || deps != NULL);
     node n;
-    int idx = (int)&g->nodes.size;
+    unsigned idx = g->nodes.size;
     if (node_init(&n, weight) != 0) {
-        return -1;
+        return (unsigned) -1;
     }
     unsigned source = 0;
     if (n_deps == 0) {
@@ -96,14 +97,14 @@ int dag_vertex(dag *g, int weight, size_t n_deps, unsigned *deps) {
     for (size_t i = 0; i < n_deps; i++) {
         assert(deps[i] < dag_size(g));
         if (idx_vec_push(&n.preds, deps[i]) != 0) {
-            return -1;
+            return (unsigned) -1;
         }
         if (idx_vec_push(&g->nodes.data[deps[i]].succs, idx) != 0) {
-            return -1;
+            return (unsigned) -1;
         }
     }
     if (node_vec_push(&g->nodes, n) != 0) {
-        return -1;
+        return (unsigned) -1;
     }
     return idx;
 }
