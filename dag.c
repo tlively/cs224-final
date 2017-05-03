@@ -67,6 +67,15 @@ err1:
     return NULL;
 }
 
+void dag_destroy(dag *g) {
+    assert(g != NULL);
+    for (size_t i = 0, size = dag_size(g); i < size; i++) {
+        node_destroy(&g->nodes.data[i]);
+    }
+    node_vec_destroy(&g->nodes);
+    free(g);
+}
+
 size_t dag_size(dag *g) {
     assert(g != NULL);
     return g->nodes.size;

@@ -4,9 +4,13 @@
 struct dag;
 typedef struct dag dag;
 
-// returns a new dag, or NULL on failure
+// returns a new dag, or NULL on failure.
 dag *dag_create(void);
 
+// clean up resources associated with the DAG.
+void dag_destroy(dag *g);
+
+// return the number of vertices in the DAG.
 size_t dag_size(dag *g);
 
 // returns the index of the new vertex, or -1 on failure. `g' must not
@@ -18,7 +22,7 @@ int dag_vertex(dag *g, int weight, size_t n, unsigned *n_deps);
 // to the dag after it has been built.
 void dag_build(dag *g);
 
-// returns the id of the source (sink) node in the DAG.
+// returns the id of the source (sink) vertex in the DAG.
 unsigned dag_source(dag *g);
 unsigned dag_sink(dag *g);
 
@@ -33,4 +37,4 @@ size_t dag_npreds(dag *g, unsigned id);
 void dag_succs(dag *g, unsigned id, unsigned *buf);
 void dag_preds(dag *g, unsigned id, unsigned *buf);
 
-#endif
+#endif // DAG_H
