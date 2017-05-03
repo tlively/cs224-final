@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "vector.h"
 #include "dag.h"
@@ -111,4 +112,42 @@ void dag_build(dag *g) {
     // construct sink node
     dag_vertex(g, 0, exit_nodes.size, exit_nodes.data);
     idx_vec_destroy(&exit_nodes);
+}
+
+unsigned dag_source(dag *g) {
+    assert(g != NULL);
+    return 0;
+}
+
+unsigned dag_sink(dag *g) {
+    assert(g != NULL);
+    return g->nodes.size - 1;
+}
+
+size_t dag_nsuccs(dag *g, unsigned id) {
+    assert(g != NULL);
+    assert(id < dag_size(g));
+    return g->nodes.data[id].succs.size;
+}
+
+size_t dag_npreds(dag *g, unsigned id) {
+    assert(g != NULL);
+    assert(id < dag_size(g));
+    return g->nodes.data[id].preds.size;
+}
+
+void dag_succs(dag *g, unsigned id, unsigned *buf) {
+    assert(g != NULL);
+    assert(buf != NULL);
+    assert(id < dag_size(g));
+    memcpy(buf, g->nodes.data[id].succs.data,
+           dag_nsuccs(g, id) * sizeof(unsigned));
+}
+
+void dag_preds(dag *g, unsigned id, unsigned *buf) {
+    assert(g != NULL);
+    assert(buf != NULL);
+    assert(id < dag_size(g));
+    memcpy(buf, g->nodes.data[id].preds.data,
+           dag_npreds(g, id) * sizeof(unsigned));
 }
