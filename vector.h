@@ -20,8 +20,6 @@
     int NAME##_push(NAME *vec, TYPE e);                 \
     int NAME##_pop(NAME *vec, TYPE *e);                 \
     void NAME##_destroy(NAME *vec);                     \
-    bool NAME##_serialize(NAME *vec, int fd);           \
-    void NAME##_deserialize(NAME *vec, int fd);
 
 #define DEFINE_VECTOR(NAME, TYPE)                                       \
     int NAME##_init(NAME *vec, size_t capacity) {                       \
