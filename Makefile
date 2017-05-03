@@ -1,6 +1,6 @@
 CC := clang
-OBJS := bitmap.o dag.o tests.o
-CFLAGS := -O0 -g
+OBJS := binheap.o bitmap.o dag.o tests.o
+CFLAGS := -O0 -g -std=c11
 
 tests: $(OBJS)
 	$(CC) -o $@ $(CFLAGS) $^

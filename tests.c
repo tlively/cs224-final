@@ -3,6 +3,7 @@
 
 #include "dag.h"
 #include "bitmap.h"
+#include "binheap.h"
 
 // A --> B         I
 //        \       / \
@@ -118,7 +119,40 @@ void test_bitmap(void) {
     bitmap_destroy(bm);
 }
 
+void test_binheap(void) {
+    binheap *heap = binheap_create();
+    assert(heap != NULL);
+
+    assert(binheap_size(heap) == 0);
+
+    int weights[] = {0, 3, 18, 5, 12, 14, 16, 9, 2, 7};
+    for (unsigned i = 0; i < 10; i++) {
+        int err = binheap_put(heap, i, weights[i]);
+        assert(err == 0);
+    }
+
+    assert(binheap_size(heap) == 10);
+
+    assert(binheap_get(heap) == 2);
+    assert(binheap_get(heap) == 6);
+    assert(binheap_get(heap) == 5);
+    assert(binheap_get(heap) == 4);
+    assert(binheap_get(heap) == 7);
+
+    assert(binheap_size(heap) == 5);
+
+    assert(binheap_get(heap) == 9);
+    assert(binheap_get(heap) == 3);
+    assert(binheap_get(heap) == 1);
+    assert(binheap_get(heap) == 8);
+    assert(binheap_get(heap) == 0);
+
+    assert(binheap_size(heap) == 0);
+    binheap_destroy(heap);
+}
+
 int main(void) {
     test_dag();
     test_bitmap();
+    test_binheap();
 }
