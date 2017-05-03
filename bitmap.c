@@ -5,8 +5,8 @@
 #include "vector.h"
 #include "bitmap.h"
 
-#define CELL_WIDTH (64)
-typedef uint64_t cell;
+#define CELL_WIDTH (8)
+typedef uint8_t cell;
 
 DECLARE_VECTOR(bvec, cell)
 DEFINE_VECTOR(bvec, cell)
@@ -54,7 +54,7 @@ int bitmap_set(bitmap *bm, unsigned idx, int val) {
         }
     }
     int old_val = (bm->vec.data[cell_idx] >> bit_idx) & 1;
-    bm->vec.data[cell_idx] &= ~(1 << cell_idx);
-    bm->vec.data[cell_idx] |= (val ? 1 : 0) << cell_idx;
+    bm->vec.data[cell_idx] &= ~(1 << bit_idx);
+    bm->vec.data[cell_idx] |= (val ? 1 : 0) << bit_idx;
     return old_val;
 }

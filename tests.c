@@ -4,8 +4,6 @@
 #include "dag.h"
 #include "bitmap.h"
 
-// DAG tests
-
 // A --> B         I
 //        \       / \
 //         E --> F   J --> K
@@ -73,6 +71,54 @@ void test_dag(void) {
     dag_destroy(graph);
 }
 
+void test_bitmap(void) {
+    bitmap *bm = bitmap_create(0);
+    assert(bm != NULL);
+
+    assert(bitmap_get(bm, 30) == 0);
+    assert(bitmap_get(bm, 60) == 0);
+    assert(bitmap_get(bm, 90) == 0);
+    assert(bitmap_get(bm, 120) == 0);
+
+    bitmap_set(bm, 30, 1);
+    bitmap_set(bm, 60, 1);
+    bitmap_set(bm, 90, 1);
+    bitmap_set(bm, 120, 1);
+
+    assert(bitmap_get(bm, 30) == 1);
+    assert(bitmap_get(bm, 60) == 1);
+    assert(bitmap_get(bm, 90) == 1);
+    assert(bitmap_get(bm, 120) == 1);
+
+    for (size_t i = 31; i < 60; i++) {
+        int old = bitmap_set(bm, i, 0);
+        assert(old == 0);
+        assert(bitmap_get(bm, i) == 0);
+    }
+
+    for (size_t i = 61; i < 90; i++) {
+        int old = bitmap_set(bm, i, 0);
+        assert(old == 0);
+        assert(bitmap_get(bm, i) == 0);
+    }
+
+    int old30 = bitmap_set(bm, 30, 0);
+    int old60 = bitmap_set(bm, 60, 0);
+    int old90 = bitmap_set(bm, 90, 0);
+    int old120 = bitmap_set(bm, 120, 0);
+
+    assert(old30 == 1);
+    assert(old60 == 1);
+    assert(old90 == 1);
+    assert(old120 == 1);
+
+    bitmap_set(bm, 10000, 1);
+    assert(bitmap_get(bm, 10000) == 1);
+
+    bitmap_destroy(bm);
+}
+
 int main(void) {
     test_dag();
+    test_bitmap();
 }
