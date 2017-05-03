@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "vector.h"
+#include "bitmap.h"
 #include "dag.h"
 
 DECLARE_VECTOR(idx_vec, unsigned);
@@ -13,6 +14,9 @@ typedef struct node {
     int weight;
     idx_vec preds;
     idx_vec succs;
+    unsigned level;
+    unsigned min_end;
+    unsigned max_start;
 } node;
 
 int node_init(node *n, int weight) {
@@ -25,6 +29,9 @@ int node_init(node *n, int weight) {
         return -1;
     }
     n->weight = weight;
+    n->level = 0;
+    n->min_end = 0;
+    n->max_start = 0;
     return 0;
 }
 
@@ -39,6 +46,7 @@ DEFINE_VECTOR(node_vec, node);
 
 struct dag {
     node_vec nodes;
+    int built;
 };
 
 dag *dag_create(void) {
@@ -57,6 +65,7 @@ dag *dag_create(void) {
     if (node_vec_push(&g->nodes, s) != 0) {
         goto err3;
     }
+    g->built = 0;
     return g;
 err3:
     node_destroy(&s);
@@ -109,19 +118,126 @@ unsigned dag_vertex(dag *g, int weight, size_t n_deps, unsigned *deps) {
     return idx;
 }
 
-void dag_build(dag *g) {
-    assert(g != NULL);
-    // find exit nodes
-    idx_vec exit_nodes;
-    idx_vec_init(&exit_nodes, 0);
-    for (size_t i = 0; i < g->nodes.size; i++) {
-        if (g->nodes.data[i].succs.size == 0) {
-            idx_vec_push(&exit_nodes, i);
+// calculate lvl
+void lvl_visit(dag *g, unsigned idx, idx_vec *lvl_ready, bitmap *lvl_finished) {
+    size_t npreds = dag_npreds(g, idx);
+    unsigned preds[npreds];
+    dag_preds(g, idx, preds);
+    for (size_t i = 0; i < npreds; i++) {
+        unsigned pred = preds[i];
+        size_t nsuccs = dag_nsuccs(g, pred);
+        unsigned succs[nsuccs];
+        dag_succs(g, pred, succs);
+        int succs_complete = 1;
+        unsigned max_level = 0;
+        for (size_t j = 0; j < nsuccs; j++) {
+            if (bitmap_get(lvl_finished, succs[j]) != 1) {
+                succs_complete = 0;
+                break;
+            }
+            max_level = (g->nodes.data[succs[j]].level > max_level) ?
+                g->nodes.data[succs[j]].level : max_level;
+        }
+        // all successors have calculated levels
+        if (succs_complete) {
+            g->nodes.data[pred].level = dag_weight(g, pred) + max_level;
+            bitmap_set(lvl_finished, pred, 1);
+            idx_vec_push(lvl_ready, pred);
         }
     }
-    // construct sink node
-    dag_vertex(g, 0, exit_nodes.size, exit_nodes.data);
-    idx_vec_destroy(&exit_nodes);
+}
+
+// calculate min_end
+void end_visit(dag *g, unsigned idx, idx_vec *end_ready, bitmap *end_finished) {
+    size_t nsuccs = dag_nsuccs(g, idx);
+    unsigned succs[nsuccs];
+    dag_succs(g, idx, succs);
+    for (size_t i = 0; i < nsuccs; i++) {
+        unsigned succ = succs[i];
+        size_t npreds = dag_npreds(g, succ);
+        unsigned preds[npreds];
+        dag_preds(g, succ, preds);
+        int preds_complete = 1;
+        unsigned max_min_end = 0;
+        for (size_t j = 0; j < npreds; j++) {
+            if (bitmap_get(end_finished, preds[j]) != 1) {
+                preds_complete = 0;
+                break;
+            }
+            max_min_end = (g->nodes.data[preds[j]].min_end > max_min_end) ?
+                g->nodes.data[preds[j]].min_end : max_min_end;
+        }
+        // all predecessors have calculated min_ends
+        if (preds_complete) {
+            g->nodes.data[succ].min_end = dag_weight(g, succ) + max_min_end;
+            bitmap_set(end_finished, succ, 1);
+            idx_vec_push(end_ready, succ);
+        }
+    }
+}
+
+
+int dag_build(dag *g, unsigned max_time) {
+    assert(g != NULL);
+    if (!g->built) {
+        // find exit nodes
+        idx_vec exit_nodes;
+        idx_vec_init(&exit_nodes, 0);
+        for (size_t i = 0; i < g->nodes.size; i++) {
+            if (g->nodes.data[i].succs.size == 0) {
+                idx_vec_push(&exit_nodes, i);
+            }
+        }
+        // construct sink node
+        dag_vertex(g, 0, exit_nodes.size, exit_nodes.data);
+        idx_vec_destroy(&exit_nodes);
+
+        {
+            // calculate level of each vertex
+            idx_vec lvl_ready;
+            if (idx_vec_init(&lvl_ready, 0) != 0) {
+                return -1;
+            }
+            bitmap *lvl_finished = bitmap_create(dag_size(g));
+            if (lvl_finished == NULL) {
+                return -1;
+            }
+            idx_vec_push(&lvl_ready, dag_sink(g));
+            bitmap_set(lvl_finished, dag_sink(g), 1);
+            while (lvl_ready.size > 0) {
+                unsigned idx;
+                idx_vec_pop(&lvl_ready, &idx);
+                lvl_visit(g, idx, &lvl_ready, lvl_finished);
+            }
+            idx_vec_destroy(&lvl_ready);
+            bitmap_destroy(lvl_finished);
+        }
+        {
+            // find min end times
+            idx_vec end_ready;
+            if (idx_vec_init(&end_ready, 0) != 0) {
+                return -1;
+            }
+            bitmap *end_finished = bitmap_create(dag_size(g));
+            if (end_finished == NULL) {
+                return -1;
+            }
+            idx_vec_push(&end_ready, dag_source(g));
+            bitmap_set(end_finished, dag_source(g), 1);
+            while (end_ready.size > 0) {
+                unsigned idx;
+                idx_vec_pop(&end_ready, &idx);
+                end_visit(g, idx, &end_ready, end_finished);
+            }
+            idx_vec_destroy(&end_ready);
+            bitmap_destroy(end_finished);
+        }
+    }
+
+    // TODO: find max start times
+
+    g->built = 1;
+    return 0;
 }
 
 unsigned dag_source(dag *g) {
@@ -160,4 +276,22 @@ void dag_preds(dag *g, unsigned id, unsigned *buf) {
     assert(id < dag_size(g));
     memcpy(buf, g->nodes.data[id].preds.data,
            dag_npreds(g, id) * sizeof(unsigned));
+}
+
+int dag_weight(dag *g, unsigned id) {
+    assert(g != NULL);
+    assert(id < dag_size(g));
+    return g->nodes.data[id].weight;
+}
+
+int dag_level(dag *g, unsigned id) {
+    assert(g != NULL);
+    assert(id < dag_size(g));
+    return g->nodes.data[id].level;
+}
+
+unsigned dag_min_end(dag *g, unsigned id) {
+    assert(g != NULL);
+    assert(id < dag_size(g));
+    return g->nodes.data[id].min_end;
 }

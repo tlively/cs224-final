@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "dag.h"
 #include "bitmap.h"
@@ -12,6 +13,7 @@
 // C --> D   G --> H
 
 void test_dag(void) {
+    printf("Testing dag\n");
     dag *graph = dag_create();
     assert(graph != NULL);
 
@@ -48,9 +50,21 @@ void test_dag(void) {
     assert(j != (unsigned) -1);
     assert(k != (unsigned) -1);
 
-    dag_build(graph);
+    dag_build(graph, 0);
 
     assert(dag_size(graph) == 13);
+
+    assert(dag_weight(graph, dag_sink(graph)) == 0);
+    assert(dag_weight(graph, dag_source(graph)) == 0);
+    assert(dag_weight(graph, e) == 5);
+
+    assert(dag_level(graph, dag_sink(graph)) == 0);
+    assert(dag_level(graph, dag_source(graph)) == 48);
+    assert(dag_level(graph, g) == 36);
+
+    assert(dag_min_end(graph, dag_sink(graph)) == 48);
+    assert(dag_min_end(graph, dag_source(graph)) == 0);
+    assert(dag_min_end(graph, h) == 26);
 
     assert(dag_nsuccs(graph, dag_source(graph)) == 3);
     assert(dag_npreds(graph, dag_source(graph)) == 0);
@@ -73,6 +87,7 @@ void test_dag(void) {
 }
 
 void test_bitmap(void) {
+    printf("Testing bitmap\n");
     bitmap *bm = bitmap_create(0);
     assert(bm != NULL);
 
@@ -120,6 +135,7 @@ void test_bitmap(void) {
 }
 
 void test_binheap(void) {
+    printf("Testing binheap\n");
     binheap *heap = binheap_create();
     assert(heap != NULL);
 

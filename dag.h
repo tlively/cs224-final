@@ -19,8 +19,10 @@ size_t dag_size(dag *g);
 unsigned dag_vertex(dag *g, int weight, size_t n, unsigned *n_deps);
 
 // performs preprocessing on the dag. New vertices should not be added
-// to the dag after it has been built.
-void dag_build(dag *g);
+// to the dag after it has been built. Returns 0 on success, -1
+// otherwise. Call again with a different `max_time' to rebuild only
+// the statistics that depend on that value.
+int dag_build(dag *g, unsigned max_time);
 
 // returns the id of the source (sink) vertex in the DAG.
 unsigned dag_source(dag *g);
@@ -36,5 +38,16 @@ size_t dag_npreds(dag *g, unsigned id);
 // with enough space to hold all of the successors (predecessors).
 void dag_succs(dag *g, unsigned id, unsigned *buf);
 void dag_preds(dag *g, unsigned id, unsigned *buf);
+
+// return the weight of the vertex with the given `id'.
+int dag_weight(dag *g, unsigned id);
+
+// return the level of the vertex with the given `id'. This should
+// only be called after dag_build.
+int dag_level(dag *g, unsigned id);
+
+// return the minimum possible completion time of the vertex with the
+// given `id'. This should only be called after dag_build.
+unsigned dag_min_end(dag *g, unsigned id);
 
 #endif // DAG_H
