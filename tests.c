@@ -91,12 +91,13 @@ void test_dag(void) {
     dag_destroy(graph);
 }
 
-
-// A --> B         I
-//        \       / \
-//         E --> F   J --> K
-//        /       \ /
-// C --> D   G --> H
+/*
+A --> B         I
+       \       / \
+         E --> F   J --> K
+       /       \ /
+C --> D   G --> H
+*/
 void test_schedule(void) {
     printf("Testing schedule\n");
     dag *graph = dag_create();
