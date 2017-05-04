@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "dag.h"
+#include "schedule.h"
 #include "bitmap.h"
 #include "binheap.h"
 
@@ -89,6 +90,74 @@ void test_dag(void) {
 
     dag_destroy(graph);
 }
+
+
+// A --> B         I
+//        \       / \
+//         E --> F   J --> K
+//        /       \ /
+// C --> D   G --> H
+void test_schedule(void) {
+    printf("Testing dag\n");
+    dag *graph = dag_create();
+    assert(graph != NULL);
+
+    unsigned a = dag_vertex(graph, 1, 0, NULL);
+    unsigned b = dag_vertex(graph, 2, 1, &a);
+    unsigned c = dag_vertex(graph, 3, 0, NULL);
+    unsigned d = dag_vertex(graph, 4, 1, &c);
+
+    unsigned e_deps[] = {b,d};
+    unsigned e = dag_vertex(graph, 5, 2, e_deps);
+
+    unsigned f = dag_vertex(graph, 6, 1, &e);
+    unsigned g = dag_vertex(graph, 7, 0, NULL);
+
+    unsigned h_deps[] = {f,g};
+    unsigned h = dag_vertex(graph, 8, 2, h_deps);
+
+    unsigned i = dag_vertex(graph, 9, 1, &f);
+
+    unsigned j_deps[] = {h,i};
+    unsigned j = dag_vertex(graph, 10, 2, j_deps);
+
+    unsigned k = dag_vertex(graph, 11, 1, &j);
+
+    unsigned m = 2;
+    schedule *perm1 = schedule_create(graph, m);
+    assert(perm1 != NULL);
+    for (unsigned i = 0; i < dag_size(graph); i++) {
+        schedule_add(perm1, i);    
+    }
+    assert(schedule_is_valid(perm1));
+    schedule_destroy(perm1);
+
+    schedule *perm2 = schedule_create(graph, m);
+    assert(perm2 != NULL);
+    schedule_add(perm2, 0);    
+    schedule_add(perm2, 2);
+    schedule_add(perm2, 1);
+    schedule_add(perm2, 3);
+    schedule_add(perm2, 4);
+    schedule_add(perm2, 6);
+    schedule_add(perm2, 5);
+    schedule_add(perm2, 7);
+    schedule_add(perm2, 8);
+    schedule_add(perm2, 9);
+    schedule_add(perm2, 10);
+    assert(schedule_is_valid(perm2));
+    schedule_destroy(perm2);
+
+    schedule *perm3 = schedule_create(graph, m);
+    assert(perm3 != NULL);
+    schedule_add(perm3, 0);    
+    schedule_add(perm3, 10);    
+    assert(schedule_is_valid(perm3));
+    schedule_destroy(perm3);
+
+
+}
+
 
 void test_bitmap(void) {
     printf("Testing bitmap\n");

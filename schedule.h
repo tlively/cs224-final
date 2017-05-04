@@ -14,7 +14,7 @@ schedule *schedule_create(dag *g, unsigned m);
 void schedule_destroy(schedule *s);
 void schedule_add(schedule *s, unsigned idx);
 void schedule_pop(schedule *s);
-int schedule_validate(schedule *s);
+int schedule_is_valid(schedule *s);
 int schedule_length(schedule *s);
 int schedule_lower_bound(schedule *s);
 
