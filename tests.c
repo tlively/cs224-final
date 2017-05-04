@@ -7,12 +7,13 @@
 #include "bitmap.h"
 #include "binheap.h"
 
-// A --> B         I
-//        \       / \
-//         E --> F   J --> K
-//        /       \ /
-// C --> D   G --> H
-
+/*
+A --> B         I
+       \       / \
+        E --> F   J --> K
+       /       \ /
+C --> D   G --> H
+*/
 void test_dag(void) {
     printf("Testing dag\n");
     dag *graph = dag_create();
