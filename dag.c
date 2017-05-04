@@ -6,9 +6,6 @@
 #include "bitmap.h"
 #include "dag.h"
 
-DECLARE_VECTOR(idx_vec, unsigned);
-DEFINE_VECTOR(idx_vec, unsigned);
-
 // holds all node-specific data
 typedef struct node {
     int weight;

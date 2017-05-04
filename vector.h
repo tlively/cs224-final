@@ -67,4 +67,6 @@
         vec->data = NULL;                                               \
     }
 
+DECLARE_VECTOR(idx_vec, unsigned);
+
 #endif // VECTOR_H
