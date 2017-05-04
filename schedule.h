@@ -29,7 +29,7 @@ size_t schedule_size(schedule *s);
 // returns 1 if the schedule is complete, 0 otherwise.
 int schedule_is_complete(schedule *s);
 
-int schedule_validate(schedule *s);
+int schedule_is_valid(schedule *s);
 int schedule_length(schedule *s);
 int schedule_lower_bound(schedule *s);
 

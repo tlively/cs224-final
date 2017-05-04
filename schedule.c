@@ -59,9 +59,25 @@ int schedule_is_complete(schedule *s) {
     return s->order.size == dag_size(s->g);
 }
 
-int schedule_validate(schedule *s) {
-    return 0;
-    // TODO
+int schedule_is_valid(schedule *s) {
+    assert(s != NULL);
+    assert(s->g != NULL);
+    size_t size = schedule_size(s);
+    bitmap* prev_jobs = bitmap_create(size);
+    for (unsigned i = 0; i < size; i++) {
+        unsigned idx = s->order.data[i];
+        size_t npreds = dag_npreds(s->g, idx);
+        unsigned preds[npreds];
+        dag_preds(s->g, idx, preds);
+        for (unsigned j = 0; j < npreds; j++) {
+            unsigned pred = s->order.data[j];
+            if (bitmap_get(prev_jobs, pred) != 1) {
+                return 0;
+            }
+        }
+        bitmap_set(prev_jobs, idx, 1);
+    }
+    return 1;
 }
 
 int schedule_length(schedule *s) {
