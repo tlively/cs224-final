@@ -119,7 +119,8 @@ unsigned dag_vertex(dag *g, int weight, size_t n_deps, unsigned *deps) {
 }
 
 // calculate lvl
-void lvl_visit(dag *g, unsigned idx, idx_vec *lvl_ready, bitmap *lvl_finished) {
+static void lvl_visit(dag *g, unsigned idx, idx_vec *lvl_ready,
+                      bitmap *lvl_finished) {
     size_t npreds = dag_npreds(g, idx);
     unsigned preds[npreds];
     dag_preds(g, idx, preds);
@@ -148,7 +149,8 @@ void lvl_visit(dag *g, unsigned idx, idx_vec *lvl_ready, bitmap *lvl_finished) {
 }
 
 // calculate min_end
-void end_visit(dag *g, unsigned idx, idx_vec *end_ready, bitmap *end_finished) {
+static void end_visit(dag *g, unsigned idx, idx_vec *end_ready,
+                      bitmap *end_finished) {
     size_t nsuccs = dag_nsuccs(g, idx);
     unsigned succs[nsuccs];
     dag_succs(g, idx, succs);
@@ -177,8 +179,8 @@ void end_visit(dag *g, unsigned idx, idx_vec *end_ready, bitmap *end_finished) {
 }
 
 // calculate max starts
-void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
-                 bitmap *start_finished, unsigned max_time) {
+static void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
+                        bitmap *start_finished, unsigned max_time) {
     size_t npreds = dag_npreds(g, idx);
     unsigned preds[npreds];
     dag_preds(g, idx, preds);
