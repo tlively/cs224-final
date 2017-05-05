@@ -304,6 +304,7 @@ int schedule_build(schedule *s, unsigned total_time) {
     }
     unsigned sched_ends[dag_size(s->g)];
     s->length = schedule_compute(s, sched_ends);
+#ifdef FUJITA
     if (s->max_starts == NULL || s->min_ends == NULL) {
         s->max_starts = malloc(sizeof(*s->max_starts) * dag_size(s->g));
         s->min_ends = malloc(sizeof(*s->min_ends) * dag_size(s->g));
@@ -319,6 +320,7 @@ int schedule_build(schedule *s, unsigned total_time) {
     if (schedule_min_ends(s, s->min_ends, sched_ends) != 0) {
         return -1;
     }
+#endif
     return 0;
 }
 

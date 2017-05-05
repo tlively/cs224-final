@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <limits.h>
-#include <stdio.h>
 
 #include "binheap.h"
 #include "bitmap.h"
@@ -18,10 +17,12 @@ int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
         unsigned sched_len = schedule_length(s);
         return (best_soln < sched_len) ? best_soln : sched_len;
     }
+#ifdef FUJITA
     unsigned fb = schedule_fernandez_bound(s);
     if (fb >= best_soln) {
         return best_soln;
     }
+#endif
     binheap *sorter = binheap_create();
     if (sorter == NULL) {
         return -1;

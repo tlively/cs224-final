@@ -43,10 +43,13 @@ int schedule_is_valid(schedule *s);
 int schedule_build(schedule *s, unsigned total_time);
 
 unsigned schedule_length(schedule *s);
+
+#ifdef FUJITA
 unsigned schedule_max_start(schedule *s, unsigned id);
 unsigned schedule_min_end(schedule *s, unsigned id);
 
 // calculate and return the Fernandez bound
 int schedule_fernandez_bound(schedule *s);
+#endif // FUJITA
 
 #endif // SCHEDULE_H
