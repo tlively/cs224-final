@@ -4,6 +4,7 @@
 
 #include "vector.h"
 #include "bitmap.h"
+#include "binheap.h"
 #include "dag.h"
 
 // holds all node-specific data
@@ -41,7 +42,7 @@ void node_destroy(node *n) {
 DECLARE_VECTOR(node_vec, node);
 DEFINE_VECTOR(node_vec, node);
 DECLARE_VECTOR(weight_vec, unsigned);
-DEFINE_VECTOR(weith_vec, unsigned);
+DEFINE_VECTOR(weight_vec, unsigned);
 
 struct dag {
     node_vec nodes;
@@ -85,6 +86,7 @@ void dag_destroy(dag *g) {
         node_destroy(&g->nodes.data[i]);
     }
     node_vec_destroy(&g->nodes);
+    weight_vec_destroy(&g->comp_list);
     free(g);
 }
 
@@ -369,7 +371,7 @@ unsigned dag_max_start(dag *g, unsigned id) {
     return g->nodes.data[id].max_start;
 }
 
-unsigned dag_comp_list(dag *g, unsigned *buf) {
+void dag_comp_list(dag *g, unsigned *buf) {
     assert(g != NULL);
     assert(buf != NULL);
     memcpy(buf, g->comp_list.data, dag_size(g) * sizeof(unsigned));
