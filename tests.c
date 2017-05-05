@@ -189,7 +189,7 @@ void test_schedule(void) {
     schedule_add(perm4, a);
     schedule_add(perm4, c);
     schedule_add(perm4, d);
-    schedule_min_ends(perm4, starts);
+    schedule_max_starts(perm4, starts, dag_level(graph, dag_source(graph)));
     assert(starts[g] == 0);
     assert(starts[a] == 0);
     assert(starts[d] == 4);
