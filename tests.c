@@ -190,9 +190,12 @@ void test_schedule(void) {
     schedule_add(perm4, c);
     schedule_add(perm4, d);
     schedule_min_ends(perm4, starts);
-    assert(ends[b] == 3);
-    assert(ends[e] == 13);
-    assert(ends[k] == 49);
+    assert(starts[g] == 0);
+    assert(starts[a] == 0);
+    assert(starts[d] == 4);
+    assert(starts[h] == 19);
+    assert(starts[e] == 7);
+    assert(starts[dag_sink(graph)] == 48);
 
     schedule_destroy(perm4);
 
