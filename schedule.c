@@ -157,38 +157,35 @@ static void end_visit(dag *g, unsigned idx, idx_vec *end_ready,
     }
 }
 
-/* // calculate max starts */
-/* static void start_visit(dag *g, unsigned idx, idx_vec *start_ready, */
-/*                         bitmap *start_finished, unsigned max_time) { */
-/*     size_t npreds = dag_npreds(g, idx); */
-/*     unsigned preds[npreds]; */
-/*     dag_preds(g, idx, preds); */
-/*     for (size_t i = 0; i < npreds; i++) { */
-/*         unsigned pred = preds[i]; */
-/*         size_t nsuccs = dag_nsuccs(g, pred); */
-/*         unsigned succs[nsuccs]; */
-/*         dag_succs(g, pred, succs); */
-/*         int succs_complete = 1; */
-/*         unsigned min_max_start = (unsigned) -1; */
-/*         for (size_t j = 0; j < nsuccs; j++) { */
-/*             if (bitmap_get(start_finished, succs[j]) != 1) { */
-/*                 succs_complete = 0; */
-/*                 break; */
-/*             } */
-/*             min_max_start = */
-/*                 (g->nodes.data[succs[j]].max_start < min_max_start) ? */
-/*                 g->nodes.data[succs[j]].max_start : min_max_start; */
-/*         } */
-/*         // all successors have calculated max_starts */
-/*         if (succs_complete) { */
-/*             g->nodes.data[pred].max_start = */
-/*                 ((max_time < min_max_start) ? max_time : min_max_start) - */
-/*                 dag_weight(g, pred); */
-/*             bitmap_set(start_finished, pred, 1); */
-/*             idx_vec_push(start_ready, pred); */
-/*         } */
-/*     } */
-/* } */
+// calculate max_start
+static void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
+                      bitmap *start_finished, unsigned *max_starts) {
+    size_t npreds = dag_npreds(g, idx);
+    unsigned preds[npreds];
+    dag_preds(g, idx, preds);
+    for (size_t i = 0; i < npreds; i++) {
+        unsigned pred = preds[i];
+        size_t nsuccs = dag_nsuccs(g, pred);
+        unsigned succs[nsuccs];
+        dag_succs(g, pred, succs);
+        int succs_complete = 1;
+        unsigned min_max_start = 0;
+        for (size_t j = 0; j < nsuccs; j++) {
+            if (bitmap_get(start_finished, succs[j]) != 1) {
+                succs_complete = 0;
+                break;
+            }
+            min_max_start = (max_starts[succs[j]] < min_max_start) ?
+                max_starts[succs[j]] : min_max_start;
+        }
+        // all successors have calculated max_starts
+        if (succs_complete) {
+            max_starts[pred] = min_max_start - dag_weight(g, pred);
+            bitmap_set(start_finished, pred, 1);
+            idx_vec_push(start_ready, pred);
+        }
+    }
+}
 
 int schedule_min_ends(schedule *s, unsigned *min_ends) {
     assert(s != NULL);
@@ -249,6 +246,68 @@ int schedule_min_ends(schedule *s, unsigned *min_ends) {
     bitmap_destroy(end_finished);
     return 0;
 }
+
+// TODO: Start with sink, not scheduled.
+int schedule_max_starts(schedule *s, unsigned *max_starts) {
+    assert(s != NULL);
+    assert(max_starts != NULL);
+    idx_vec start_ready;
+    if (idx_vec_init(&start_ready, 0) != 0) {
+        return -1;
+    }
+    bitmap *start_finished = bitmap_create(dag_size(s->g));
+    if (start_finished == NULL) {
+        return -1;
+    }
+    unsigned sched_ends[dag_size(s->g)];
+    // TODO: Move this call into schedule_build
+    schedule_compute(s, sched_ends);
+    for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
+        unsigned idx = s->order.data[i];
+        bitmap_set(start_finished, idx, 1);
+        max_starts[idx] = sched_ends[idx] - dag_weight(s->g, idx);
+    }
+
+    // keep track of predecessors we've seen
+    bitmap *pred_inits = bitmap_create(dag_size(s->g));
+    for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
+        unsigned idx = s->order.data[i];
+        size_t npreds = dag_npreds(s->g, idx);
+        unsigned preds[npreds];
+        dag_preds(s->g, idx, preds);
+        for (size_t i = 0; i < npreds; i++) {
+            unsigned pred = preds[i];
+            if (bitmap_get(pred_inits, pred)) {
+                continue;
+            }
+            size_t nsuccs = dag_nsuccs(s->g, pred);
+            unsigned succs[nsuccs];
+            dag_succs(s->g, pred, succs);
+            int all_scheduled = 1;
+            for (size_t i = 0; i < nsuccs; i++) {
+                unsigned succ = succs[i];
+                if (bitmap_get(start_finished, succ) != 1) {
+                    all_scheduled = 0;
+                    break;
+                }
+            }
+            if (all_scheduled) {
+                idx_vec_push(&start_ready, pred);
+            }
+            bitmap_set(pred_inits, pred, 1);
+        }
+    }
+    while (start_ready.size > 0) {
+        unsigned idx;
+        idx_vec_pop(&start_ready, &idx);
+        end_visit(s->g, idx, &start_ready, start_finished, max_starts);
+    }
+    bitmap_destroy(pred_inits);
+    idx_vec_destroy(&start_ready);
+    bitmap_destroy(start_finished);
+    return 0;
+}
+
 
 /* int schedule_fernandez_bound(schedule *s) { */
 /*     assert(s != NULL); */

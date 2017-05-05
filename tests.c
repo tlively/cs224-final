@@ -189,7 +189,6 @@ void test_schedule(void) {
     schedule_destroy(perm4);
 }
 
-
 void test_bitmap(void) {
     printf("Testing bitmap\n");
     bitmap *bm = bitmap_create(0);
