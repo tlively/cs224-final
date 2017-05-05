@@ -31,7 +31,9 @@ int schedule_is_complete(schedule *s);
 
 int schedule_is_valid(schedule *s);
 
-// task ends needs to be the size of the dag.
+// task ends needs to be the size of the dag. After schedule_compute,
+// only the indices corresponding to items in the schedule are
+// defined.
 int schedule_compute(schedule *s, unsigned *task_ends);
 
 // calculate end times (start times) of all tasks, using exact times

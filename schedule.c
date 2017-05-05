@@ -87,7 +87,7 @@ int schedule_compute(schedule *s, unsigned *task_ends) {
     int assignments[dag_size(s->g)];
     int end_times[s->m];
     int cur_items[s->m];
-    memset(task_ends, 0, dag_size(s->g) * sizeof(*end_times));
+    memset(task_ends, 0, schedule_size(s) * sizeof(*task_ends));
     memset(assignments, -1, dag_size(s->g) * sizeof(*assignments));
     memset(end_times, 0, s->m * sizeof(int));
     memset(cur_items, 0, s->m * sizeof(int));
@@ -253,7 +253,6 @@ int schedule_min_ends(schedule *s, unsigned *min_ends) {
     return 0;
 }
 
-// TODO: Start with sink, not scheduled.
 int schedule_max_starts(schedule *s, unsigned *max_starts,
                         unsigned total_time) {
     assert(s != NULL);
