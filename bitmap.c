@@ -5,8 +5,8 @@
 #include "vector.h"
 #include "bitmap.h"
 
-#define CELL_WIDTH (8)
-typedef uint8_t cell;
+#define CELL_WIDTH (32)
+typedef uint32_t cell;
 
 DECLARE_VECTOR(bvec, cell)
 DEFINE_VECTOR(bvec, cell)
