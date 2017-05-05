@@ -18,7 +18,7 @@ size_t binheap_size(binheap *heap);
 // -1 on failure.
 int binheap_put(binheap *heap, unsigned val, int w);
 
-// returns the value with minimum weight or ((unsigned) -1) if the
+// returns the value with maximum weight or ((unsigned) -1) if the
 // heap is empty.
 unsigned binheap_get(binheap *heap);
 

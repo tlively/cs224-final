@@ -40,9 +40,12 @@ void node_destroy(node *n) {
 
 DECLARE_VECTOR(node_vec, node);
 DEFINE_VECTOR(node_vec, node);
+DECLARE_VECTOR(weight_vec, unsigned);
+DEFINE_VECTOR(weith_vec, unsigned);
 
 struct dag {
     node_vec nodes;
+    weight_vec comp_list;
     int built;
 };
 
@@ -52,6 +55,9 @@ dag *dag_create(void) {
         return NULL;
     }
     if (node_vec_init(&g->nodes, 1) != 0) {
+        goto err1;
+    }
+    if (weight_vec_init(&g->comp_list, 1) != 0) {
         goto err1;
     }
     // create source node
@@ -222,7 +228,6 @@ int dag_build(dag *g, unsigned max_time) {
         // construct sink node
         dag_vertex(g, 0, exit_nodes.size, exit_nodes.data);
         idx_vec_destroy(&exit_nodes);
-
         {
             // calculate level of each vertex
             idx_vec lvl_ready;
@@ -265,6 +270,9 @@ int dag_build(dag *g, unsigned max_time) {
         }
     }
 
+    // init binheap to calculate completion_list
+    binheap *start_end = binheap_create();
+
     // find max start times
     idx_vec start_ready;
     if (idx_vec_init(&start_ready, 0) != 0) {
@@ -281,10 +289,20 @@ int dag_build(dag *g, unsigned max_time) {
         unsigned idx;
         idx_vec_pop(&start_ready, &idx);
         start_visit(g, idx, &start_ready, start_finished, max_time);
+        node nd = g->nodes.data[idx];
+        binheap_put(start_end, nd.max_start, -((int) nd.max_start));
+        binheap_put(start_end, nd.min_end, -((int) nd.min_end));
     }
+
+    size_t size = binheap_size(start_end);
+    for (unsigned i = 0; i < size; i++) {
+        unsigned w = binheap_get(start_end);
+        weight_vec_push(&(g->comp_list), w);
+    }
+
     idx_vec_destroy(&start_ready);
     bitmap_destroy(start_finished);
-
+    binheap_destroy(start_end);
     g->built = 1;
     return 0;
 }
@@ -349,4 +367,10 @@ unsigned dag_max_start(dag *g, unsigned id) {
     assert(g != NULL);
     assert(id < dag_size(g));
     return g->nodes.data[id].max_start;
+}
+
+unsigned dag_comp_list(dag *g, unsigned *buf) {
+    assert(g != NULL);
+    assert(buf != NULL);
+    memcpy(buf, g->comp_list.data, dag_size(g) * sizeof(unsigned));
 }
