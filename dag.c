@@ -388,5 +388,5 @@ size_t dag_comp_list_size(dag *g) {
 void dag_comp_list(dag *g, unsigned *buf) {
     assert(g != NULL);
     assert(buf != NULL);
-    memcpy(buf, g->comp_list.data, dag_size(g) * sizeof(unsigned));
+    memcpy(buf, g->comp_list.data, g->comp_list.size * sizeof(unsigned));
 }

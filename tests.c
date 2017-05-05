@@ -91,7 +91,7 @@ void test_dag(void) {
 
     unsigned size = dag_comp_list_size(graph);
     unsigned comp_list[size];
-    dag_comp_list(graph, &comp_list);
+    dag_comp_list(graph, comp_list);
     assert(comp_list[0] == 0);
     assert(comp_list[size-1] == 100);
     assert(comp_list[10] == 52);
