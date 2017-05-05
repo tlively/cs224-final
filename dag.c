@@ -59,23 +59,25 @@ dag *dag_create(void) {
         goto err1;
     }
     if (weight_vec_init(&g->comp_list, 1) != 0) {
-        goto err1;
+        goto err2;
     }
     // create source node
     node s;
     if (node_init(&s, 0) != 0) {
-        goto err2;
+        goto err3;
     }
     if (node_vec_push(&g->nodes, s) != 0) {
-        goto err3;
+        goto err4;
     }
     g->built = 0;
     return g;
-err3:
+ err4:
     node_destroy(&s);
-err2:
+ err3:
+    weight_vec_destroy(&g->comp_list);
+ err2:
     node_vec_destroy(&g->nodes);
-err1:
+ err1:
     free(g);
     return NULL;
 }
@@ -272,6 +274,11 @@ int dag_build(dag *g, unsigned max_time) {
         }
     }
 
+    if (max_time == 0) {
+        // set max_time to critical path length
+        max_time = dag_level(g, dag_source(g));
+    }
+
     // init binheap to calculate completion_list
     binheap *start_end = binheap_create();
 
@@ -299,7 +306,9 @@ int dag_build(dag *g, unsigned max_time) {
     size_t size = binheap_size(start_end);
     for (unsigned i = 0; i < size; i++) {
         unsigned w = binheap_get(start_end);
-        weight_vec_push(&(g->comp_list), w);
+        if (w != g->comp_list.data[g->comp_list.size - 1]) {
+            weight_vec_push(&g->comp_list, w);
+        }
     }
 
     idx_vec_destroy(&start_ready);
@@ -369,6 +378,11 @@ unsigned dag_max_start(dag *g, unsigned id) {
     assert(g != NULL);
     assert(id < dag_size(g));
     return g->nodes.data[id].max_start;
+}
+
+size_t dag_comp_list_size(dag *g) {
+    assert(g != NULL);
+    return g->comp_list.size;
 }
 
 void dag_comp_list(dag *g, unsigned *buf) {
