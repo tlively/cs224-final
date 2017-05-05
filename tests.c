@@ -52,7 +52,7 @@ void test_dag(void) {
     assert(j != (unsigned) -1);
     assert(k != (unsigned) -1);
 
-    dag_build(graph, 100);
+    dag_build(graph);
 
     assert(dag_size(graph) == 13);
 
@@ -119,30 +119,30 @@ void test_schedule(void) {
     unsigned k = dag_vertex(graph, 11, 1, &j);
     (void) k;
 
-    dag_build(graph, 100);
+    dag_build(graph);
 
     unsigned m = 2;
 
     schedule *perm2 = schedule_create(graph, m);
     assert(perm2 != NULL);
 
-    size_t n_nodes = dag_size(graph);
-    unsigned ends[n_nodes];
-
     schedule_add(perm2, dag_source(graph));
 
-    assert(schedule_compute(perm2, ends) == 0);
+    schedule_build(perm2, 0);
+    assert(schedule_length(perm2) == 0);
 
     schedule_add(perm2, a);
     schedule_add(perm2, c);
     schedule_add(perm2, b);
 
-    assert(schedule_compute(perm2, ends) == 3);
+    schedule_build(perm2, 0);
+    assert(schedule_length(perm2) == 3);
 
     schedule_add(perm2, d);
     schedule_add(perm2, e);
 
-    assert(schedule_compute(perm2, ends) == 12);
+    schedule_build(perm2, 0);
+    assert(schedule_length(perm2) == 12);
 
     schedule_add(perm2, g);
     schedule_add(perm2, f);
@@ -151,17 +151,19 @@ void test_schedule(void) {
     schedule_add(perm2, j);
     schedule_add(perm2, k);
 
-    assert(schedule_compute(perm2, ends) == 48);
+    schedule_build(perm2, 0);
+    assert(schedule_length(perm2) == 48);
 
     schedule_add(perm2, dag_sink(graph));
     assert(schedule_is_valid(perm2));
 
-    assert(schedule_compute(perm2, ends) == 48);
+    schedule_build(perm2, 0);
+    assert(schedule_length(perm2) == 48);
 
-    assert(ends[dag_sink(graph)] == 48);
-    assert(ends[g] == 10);
-    assert(ends[i] == 27);
-    assert(ends[h] == 26);
+    assert(schedule_min_end(perm2, dag_sink(graph)) == 48);
+    assert(schedule_min_end(perm2, g) == 10);
+    assert(schedule_min_end(perm2, i) == 27);
+    assert(schedule_min_end(perm2, h) == 26);
 
     schedule_destroy(perm2);
 
@@ -173,31 +175,20 @@ void test_schedule(void) {
     schedule_add(perm3, a);
     schedule_add(perm3, c);
     schedule_add(perm3, d);
-    schedule_min_ends(perm3, ends);
-    assert(ends[b] == 3);
-    assert(ends[e] == 13);
-    assert(ends[k] == 49);
+
+    schedule_build(perm3, 0);
+    assert(schedule_min_end(perm3, b) == 3);
+    assert(schedule_min_end(perm3, e) == 13);
+    assert(schedule_min_end(perm3, k) == 49);
+
+    assert(schedule_max_start(perm3, g) == 0);
+    assert(schedule_max_start(perm3, a) == 0);
+    assert(schedule_max_start(perm3, d) == 4);
+    assert(schedule_max_start(perm3, h) == 19);
+    assert(schedule_max_start(perm3, e) == 7);
+    assert(schedule_max_start(perm3, dag_sink(graph)) == 48);
 
     schedule_destroy(perm3);
-
-    // test max start
-    unsigned starts[n_nodes];
-    schedule *perm4 = schedule_create(graph, m);
-    assert(perm4 != NULL);
-    schedule_add(perm4, dag_source(graph));
-    schedule_add(perm4, g);
-    schedule_add(perm4, a);
-    schedule_add(perm4, c);
-    schedule_add(perm4, d);
-    schedule_max_starts(perm4, starts, dag_level(graph, dag_source(graph)));
-    assert(starts[g] == 0);
-    assert(starts[a] == 0);
-    assert(starts[d] == 4);
-    assert(starts[h] == 19);
-    assert(starts[e] == 7);
-    assert(starts[dag_sink(graph)] == 48);
-
-    schedule_destroy(perm4);
 
     // test validity check
     schedule *perm5 = schedule_create(graph, m);

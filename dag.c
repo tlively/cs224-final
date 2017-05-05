@@ -142,7 +142,7 @@ static void lvl_visit(dag *g, unsigned idx, idx_vec *lvl_ready,
     }
 }
 
-int dag_build(dag *g, unsigned max_time) {
+int dag_build(dag *g) {
     assert(g != NULL);
     if (!g->built) {
         // find exit nodes
@@ -176,47 +176,6 @@ int dag_build(dag *g, unsigned max_time) {
         idx_vec_destroy(&lvl_ready);
         bitmap_destroy(lvl_finished);
     }
-
-    /* if (max_time == 0) { */
-    /*     // set max_time to critical path length */
-    /*     max_time = dag_level(g, dag_source(g)); */
-    /* } */
-
-    /* // init binheap to calculate completion_list */
-    /* binheap *start_end = binheap_create(); */
-
-    /* // find max start times */
-    /* idx_vec start_ready; */
-    /* if (idx_vec_init(&start_ready, 0) != 0) { */
-    /*     return -1; */
-    /* } */
-    /* bitmap *start_finished = bitmap_create(dag_size(g)); */
-    /* if (start_finished == NULL) { */
-    /*     return -1; */
-    /* } */
-    /* g->nodes.data[dag_sink(g)].max_start = max_time; */
-    /* idx_vec_push(&start_ready, dag_sink(g)); */
-    /* bitmap_set(start_finished, dag_sink(g), 1); */
-    /* while (start_ready.size > 0) { */
-    /*     unsigned idx; */
-    /*     idx_vec_pop(&start_ready, &idx); */
-    /*     start_visit(g, idx, &start_ready, start_finished, max_time); */
-    /*     node nd = g->nodes.data[idx]; */
-    /*     binheap_put(start_end, nd.max_start, -((int) nd.max_start)); */
-    /*     binheap_put(start_end, nd.min_end, -((int) nd.min_end)); */
-    /* } */
-
-    /* size_t size = binheap_size(start_end); */
-    /* for (unsigned i = 0; i < size; i++) { */
-    /*     unsigned w = binheap_get(start_end); */
-    /*     if (w != g->comp_list.data[g->comp_list.size - 1]) { */
-    /*         weight_vec_push(&g->comp_list, w); */
-    /*     } */
-    /* } */
-
-    /* idx_vec_destroy(&start_ready); */
-    /* bitmap_destroy(start_finished); */
-    /* binheap_destroy(start_end); */
     g->built = 1;
     return 0;
 }

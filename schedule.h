@@ -31,16 +31,14 @@ int schedule_is_complete(schedule *s);
 
 int schedule_is_valid(schedule *s);
 
-// task ends needs to be the size of the dag. After schedule_compute,
-// only the indices corresponding to items in the schedule are
-// defined.
-int schedule_compute(schedule *s, unsigned *task_ends);
+// calculates the end times of scheduled items, and the min_end and
+// max_start times for each task, given the `total_time' parameter. If
+// `total_time' is 0, the critical path length is used instead.
+int schedule_build(schedule *s, unsigned total_time);
 
-// calculate end times (start times) of all tasks, using exact times
-// when possible and lower (upper) bound elsewhere. `min_ends'
-// (`max_starts') should be the same size as the dag.
-int schedule_min_ends(schedule *s, unsigned *min_ends);
-int schedule_max_starts(schedule *s, unsigned *max_starts, unsigned total_time);
+unsigned schedule_length(schedule *s);
+unsigned schedule_max_start(schedule *s, unsigned id);
+unsigned schedule_min_end(schedule *s, unsigned id);
 
 // calculate and return the Fernandez bound
 int schedule_fernandez_bound(schedule *s);

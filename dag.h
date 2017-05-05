@@ -20,9 +20,8 @@ unsigned dag_vertex(dag *g, int weight, size_t n, unsigned *n_deps);
 
 // performs preprocessing on the dag. New vertices should not be added
 // to the dag after it has been built. Returns 0 on success, -1
-// otherwise. Call again with a different `max_time' to rebuild only
-// the statistics that depend on that value.
-int dag_build(dag *g, unsigned max_time);
+// otherwise.
+int dag_build(dag *g);
 
 // returns the id of the source (sink) vertex in the DAG.
 unsigned dag_source(dag *g);

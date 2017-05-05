@@ -12,6 +12,9 @@ struct schedule {
     idx_vec order;
     dag *g;
     unsigned m;
+    unsigned length;
+    unsigned *max_starts;
+    unsigned *min_ends;
 };
 
 schedule *schedule_create(dag *g, unsigned m) {
@@ -27,12 +30,17 @@ schedule *schedule_create(dag *g, unsigned m) {
     }
     s->g = g;
     s->m = m;
+    s->length = 0;
+    s->max_starts = NULL;
+    s->min_ends = NULL;
     return s;
 }
 
 void schedule_destroy(schedule *s) {
     assert(s != NULL);
     idx_vec_destroy(&s->order);
+    free(s->max_starts);
+    free(s->min_ends);
     free(s);
 }
 
@@ -81,7 +89,7 @@ int schedule_is_valid(schedule *s) {
     return 1;
 }
 
-int schedule_compute(schedule *s, unsigned *task_ends) {
+static int schedule_compute(schedule *s, unsigned *task_ends) {
     assert(s != NULL);
     assert(task_ends != NULL);
     int assignments[dag_size(s->g)];
@@ -193,7 +201,8 @@ static void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
     }
 }
 
-int schedule_min_ends(schedule *s, unsigned *min_ends) {
+static int schedule_min_ends(schedule *s, unsigned *min_ends,
+                             unsigned *sched_ends) {
     assert(s != NULL);
     assert(min_ends != NULL);
     idx_vec end_ready;
@@ -204,9 +213,6 @@ int schedule_min_ends(schedule *s, unsigned *min_ends) {
     if (end_finished == NULL) {
         return -1;
     }
-    unsigned sched_ends[dag_size(s->g)];
-    // TODO: Move this call into schedule_build
-    schedule_compute(s, sched_ends);
     for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
         unsigned idx = s->order.data[i];
         bitmap_set(end_finished, idx, 1);
@@ -253,8 +259,8 @@ int schedule_min_ends(schedule *s, unsigned *min_ends) {
     return 0;
 }
 
-int schedule_max_starts(schedule *s, unsigned *max_starts,
-                        unsigned total_time) {
+static int schedule_max_starts(schedule *s, unsigned *max_starts,
+                               unsigned total_time, unsigned *sched_ends) {
     assert(s != NULL);
     assert(max_starts != NULL);
     idx_vec start_ready;
@@ -265,9 +271,6 @@ int schedule_max_starts(schedule *s, unsigned *max_starts,
     if (start_finished == NULL) {
         return -1;
     }
-    unsigned sched_ends[dag_size(s->g)];
-    // TODO: Move this call into schedule_build
-    schedule_compute(s, sched_ends);
     for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
         unsigned idx = s->order.data[i];
         bitmap_set(start_finished, idx, 1);
@@ -287,6 +290,49 @@ int schedule_max_starts(schedule *s, unsigned *max_starts,
     bitmap_destroy(start_finished);
     return 0;
 }
+
+int schedule_build(schedule *s, unsigned total_time) {
+    assert(s != NULL);
+    if (total_time == 0) {
+        total_time = dag_level(s->g, dag_source(s->g));
+    }
+    unsigned sched_ends[dag_size(s->g)];
+    s->length = schedule_compute(s, sched_ends);
+    if (s->max_starts == NULL || s->min_ends == NULL) {
+        s->max_starts = malloc(sizeof(*s->max_starts) * dag_size(s->g));
+        s->min_ends = malloc(sizeof(*s->min_ends) * dag_size(s->g));
+        if (s->max_starts == NULL || s->min_ends == NULL) {
+            free(s->max_starts);
+            free(s->min_ends);
+            return -1;
+        }
+    }
+    if (schedule_max_starts(s, s->max_starts, total_time, sched_ends) != 0) {
+        return -1;
+    }
+    if (schedule_min_ends(s, s->min_ends, sched_ends) != 0) {
+        return -1;
+    }
+    return 0;
+}
+
+unsigned schedule_length(schedule *s) {
+    assert(s != NULL);
+    return s->length;
+}
+
+unsigned schedule_max_start(schedule *s, unsigned id) {
+    assert(s != NULL);
+    assert(id < dag_size(s->g));
+    return s->max_starts[id];
+}
+
+unsigned schedule_min_end(schedule *s, unsigned id) {
+    assert(s != NULL);
+    assert(id < dag_size(s->g));
+    return s->min_ends[id];
+}
+
 
 
 /* int schedule_fernandez_bound(schedule *s) { */
