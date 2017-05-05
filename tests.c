@@ -84,14 +84,6 @@ void test_dag(void) {
     dag_destroy(graph);
 }
 
-/*
-A --> B         I
-       \       / \
-         E --> F   J --> K
-       /       \ /
-C --> D   G --> H
-*/
-
 void test_schedule(void) {
     printf("Testing schedule\n");
     dag *graph = dag_create();
@@ -197,6 +189,27 @@ void test_schedule(void) {
     schedule_add(perm5, k);
     assert(!schedule_is_valid(perm5));
     schedule_destroy(perm5);
+
+    dag_destroy(graph);
+
+    // test Fernandez bound (from Fujita)
+    graph = dag_create();
+    assert(graph != NULL);
+    dag_vertex(graph, 5, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_build(graph);
+
+    schedule *perm6 = schedule_create(graph, 2);
+    schedule_add(perm6, dag_source(graph));
+    int err = schedule_build(perm6, 0);
+    assert(err == 0);
+    assert(schedule_fernandez_bound(perm6) == 8);
+    schedule_destroy(perm6);
+    dag_destroy(graph);
 }
 
 void test_bitmap(void) {

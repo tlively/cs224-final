@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "vector.h"
 #include "bitmap.h"
@@ -92,16 +93,16 @@ int schedule_is_valid(schedule *s) {
 static int schedule_compute(schedule *s, unsigned *task_ends) {
     assert(s != NULL);
     assert(task_ends != NULL);
-    int assignments[dag_size(s->g)];
-    int end_times[s->m];
-    int cur_items[s->m];
+    unsigned assignments[dag_size(s->g)];
+    unsigned end_times[s->m];
+    unsigned cur_items[s->m];
     memset(task_ends, 0, schedule_size(s) * sizeof(*task_ends));
     memset(assignments, -1, dag_size(s->g) * sizeof(*assignments));
-    memset(end_times, 0, s->m * sizeof(int));
-    memset(cur_items, 0, s->m * sizeof(int));
+    memset(end_times, 0, s->m * sizeof(unsigned));
+    memset(cur_items, 0, s->m * sizeof(unsigned));
     for (size_t i = 0; i < s->order.size; i++) {
-        int cur_time = INT_MAX;
-        int cur_m = 0;
+        unsigned cur_time = UINT_MAX;
+        unsigned cur_m = 0;
         for (size_t i = 0; i < s->m; i++) {
             if (end_times[i] < cur_time) {
                 cur_time = end_times[i];
@@ -113,7 +114,7 @@ static int schedule_compute(schedule *s, unsigned *task_ends) {
         unsigned preds[npreds];
         dag_preds(s->g, idx, preds);
         unsigned max_pred_end = 0;
-        int max_pred_m = 0;
+        unsigned max_pred_m = 0;
         for (size_t i = 0; i < npreds; i++) {
             if (task_ends[preds[i]] > max_pred_end) {
                 max_pred_end = task_ends[preds[i]];
@@ -128,7 +129,7 @@ static int schedule_compute(schedule *s, unsigned *task_ends) {
         task_ends[idx] = cur_time + dag_weight(s->g, idx);
         end_times[cur_m] = cur_time + dag_weight(s->g, idx);
     }
-    int final_time = -1;
+    unsigned final_time = 0;
     for (size_t i = 0; i < s->m; i++) {
         final_time = (end_times[i] > final_time) ? end_times[i] : final_time;
     }
@@ -143,6 +144,9 @@ static void end_visit(dag *g, unsigned idx, idx_vec *end_ready,
     dag_succs(g, idx, succs);
     for (size_t i = 0; i < nsuccs; i++) {
         unsigned succ = succs[i];
+        if (bitmap_get(end_finished, succ)) {
+            continue;
+        }
         size_t npreds = dag_npreds(g, succ);
         unsigned preds[npreds];
         dag_preds(g, succ, preds);
@@ -217,43 +221,13 @@ static int schedule_min_ends(schedule *s, unsigned *min_ends,
         unsigned idx = s->order.data[i];
         bitmap_set(end_finished, idx, 1);
         min_ends[idx] = sched_ends[idx];
-    }
-
-    // keep track of successors we've seen
-    bitmap *succ_inits = bitmap_create(dag_size(s->g));
-    for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
-        unsigned idx = s->order.data[i];
-        size_t nsuccs = dag_nsuccs(s->g, idx);
-        unsigned succs[nsuccs];
-        dag_succs(s->g, idx, succs);
-        for (size_t i = 0; i < nsuccs; i++) {
-            unsigned succ = succs[i];
-            if (bitmap_get(succ_inits, succ)) {
-                continue;
-            }
-            size_t npreds = dag_npreds(s->g, succ);
-            unsigned preds[npreds];
-            dag_preds(s->g, succ, preds);
-            int all_scheduled = 1;
-            for (size_t i = 0; i < npreds; i++) {
-                unsigned pred = preds[i];
-                if (bitmap_get(end_finished, pred) != 1) {
-                    all_scheduled = 0;
-                    break;
-                }
-            }
-            if (all_scheduled) {
-                idx_vec_push(&end_ready, succ);
-            }
-            bitmap_set(succ_inits, succ, 1);
-        }
+        idx_vec_push(&end_ready, idx);
     }
     while (end_ready.size > 0) {
         unsigned idx;
         idx_vec_pop(&end_ready, &idx);
         end_visit(s->g, idx, &end_ready, end_finished, min_ends);
     }
-    bitmap_destroy(succ_inits);
     idx_vec_destroy(&end_ready);
     bitmap_destroy(end_finished);
     return 0;
@@ -333,34 +307,49 @@ unsigned schedule_min_end(schedule *s, unsigned id) {
     return s->min_ends[id];
 }
 
+int schedule_fernandez_bound(schedule *s) {
+    assert(s != NULL);
+    binheap *sorter = binheap_create();
+    for (size_t i = 0; i < dag_size(s->g); i++) {
+        unsigned max_start = schedule_max_start(s, i);
+        unsigned min_end = schedule_min_end(s, i);
+        binheap_put(sorter, max_start, -((int) max_start));
+        binheap_put(sorter, min_end, -((int) min_end));
+    }
+    idx_vec comp_list;
+    idx_vec_init(&comp_list, 0);
+    idx_vec_push(&comp_list, binheap_get(sorter));
+    while (binheap_size(sorter) > 0) {
+        unsigned c = binheap_get(sorter);
+        if (c != comp_list.data[comp_list.size - 1]) {
+            idx_vec_push(&comp_list, c);
+        }
+    }
+    binheap_destroy(sorter);
 
+    int max_q = INT_MIN;
+    for (size_t i = 0; i < comp_list.size - 1; i++) {
+        for (size_t j = i + 1; j < comp_list.size; j++) {
+            int work_density = 0;
+            // TODO: Compute this is constant time
+            for (size_t k = 0, n_nodes = dag_size(s->g); k < n_nodes; k++) {
+                if (schedule_max_start(s, k) < comp_list.data[j] &&
+                    schedule_min_end(s, k) > comp_list.data[i]) {
+                    int case1 = schedule_min_end(s, k) - comp_list.data[i];
+                    int case2 = dag_weight(s->g, k);
+                    int case3 = comp_list.data[j] - schedule_max_start(s, k);
+                    int case4 = comp_list.data[j] - comp_list.data[i];
+                    int min1 = (case1 < case2) ? case1 : case2;
+                    int min2 = (case3 < case4) ? case3 : case4;
+                    work_density += (min1 < min2) ? min1 : min2;
+                }
+            }
+            int cur_q = (comp_list.data[i] - comp_list.data[j]) +
+                work_density / s->m + (work_density % s->m != 0);
+            max_q = (cur_q > max_q) ? cur_q : max_q;
+        }
+    }
 
-/* int schedule_fernandez_bound(schedule *s) { */
-/*     assert(s != NULL); */
-/*     size_t n_comps = dag_comp_list_size(s->g); */
-/*     unsigned comps[n_comps]; */
-/*     dag_comp_list(s->g, comps); */
-/*     int max_q = INT_MIN; */
-/*     for (size_t i = 0; i < n_comps - 1; i++) { */
-/*         for (size_t j = i + 1; j < n_comps; j++) { */
-/*             int work_density = 0; */
-/*             for (size_t k = 0, n_nodes = dag_size(s->g); k < n_nodes; k++) { */
-/*                 if (dag_max_start(k) < comps[j] && */
-/*                     dag_min_end(k) > comps[i]) { */
-/*                     int case1 = dag_min_end(s->g, k) - comps[i]; */
-/*                     int case2 = dag_weight(s->g, k); */
-/*                     int case3 = comps[j] - dag_max_start(s->g, k); */
-/*                     int case4 = comps[j] - comps[i]; */
-/*                     int min1 = (case1 < case2) ? case1 : case2; */
-/*                     int min2 = (case3 < case4) ? case3 : case4; */
-/*                     work_density += (min1 < min2) ? min1 : min2; */
-/*                 } */
-/*             } */
-/*             int cur_q = (comps[i] - comps[j]) + work_density / s->m + */
-/*                 (work_density % s->m != 0); */
-/*             max_q = (cur_q > max_q) ? cur_q : max_q; */
-/*         } */
-/*     } */
-/*     int crit_path = dag_level(s->g, dag_source(s->g)); */
-/*     return (max_q > 0) ? crit_path + max_q : crit_path; */
-/* } */
+    int crit_path = dag_level(s->g, dag_source(s->g));
+    return (max_q > 0) ? crit_path + max_q : crit_path;
+}
