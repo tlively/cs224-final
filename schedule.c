@@ -165,24 +165,26 @@ static void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
     dag_preds(g, idx, preds);
     for (size_t i = 0; i < npreds; i++) {
         unsigned pred = preds[i];
-        size_t nsuccs = dag_nsuccs(g, pred);
-        unsigned succs[nsuccs];
-        dag_succs(g, pred, succs);
-        int succs_complete = 1;
-        unsigned min_max_start = 0;
-        for (size_t j = 0; j < nsuccs; j++) {
-            if (bitmap_get(start_finished, succs[j]) != 1) {
-                succs_complete = 0;
-                break;
+        if (!bitmap_get(start_finished, pred)) {
+            size_t nsuccs = dag_nsuccs(g, pred);
+            unsigned succs[nsuccs];
+            dag_succs(g, pred, succs);
+            int succs_complete = 1;
+            unsigned min_max_start = 0;
+            for (size_t j = 0; j < nsuccs; j++) {
+                if (bitmap_get(start_finished, succs[j]) != 1) {
+                    succs_complete = 0;
+                    break;
+                }
+                min_max_start = (max_starts[succs[j]] < min_max_start) ?
+                    max_starts[succs[j]] : min_max_start;
             }
-            min_max_start = (max_starts[succs[j]] < min_max_start) ?
-                max_starts[succs[j]] : min_max_start;
-        }
-        // all successors have calculated max_starts
-        if (succs_complete) {
-            max_starts[pred] = min_max_start - dag_weight(g, pred);
-            bitmap_set(start_finished, pred, 1);
-            idx_vec_push(start_ready, pred);
+            // all successors have calculated max_starts
+            if (succs_complete) {
+                max_starts[pred] = min_max_start - dag_weight(g, pred);
+                bitmap_set(start_finished, pred, 1);
+                idx_vec_push(start_ready, pred);
+            }
         }
     }
 }
@@ -268,41 +270,42 @@ int schedule_max_starts(schedule *s, unsigned *max_starts) {
         max_starts[idx] = sched_ends[idx] - dag_weight(s->g, idx);
     }
 
-    // keep track of predecessors we've seen
-    bitmap *pred_inits = bitmap_create(dag_size(s->g));
-    for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
-        unsigned idx = s->order.data[i];
-        size_t npreds = dag_npreds(s->g, idx);
-        unsigned preds[npreds];
-        dag_preds(s->g, idx, preds);
-        for (size_t i = 0; i < npreds; i++) {
-            unsigned pred = preds[i];
-            if (bitmap_get(pred_inits, pred)) {
-                continue;
-            }
-            size_t nsuccs = dag_nsuccs(s->g, pred);
-            unsigned succs[nsuccs];
-            dag_succs(s->g, pred, succs);
-            int all_scheduled = 1;
-            for (size_t i = 0; i < nsuccs; i++) {
-                unsigned succ = succs[i];
-                if (bitmap_get(start_finished, succ) != 1) {
-                    all_scheduled = 0;
-                    break;
-                }
-            }
-            if (all_scheduled) {
-                idx_vec_push(&start_ready, pred);
-            }
-            bitmap_set(pred_inits, pred, 1);
-        }
-    }
+    // // keep track of predecessors we've seen
+    // bitmap *pred_inits = bitmap_create(dag_size(s->g));
+    // for (size_t i = 0, nodes = schedule_size(s); i < nodes; i++) {
+    //     unsigned idx = s->order.data[i];
+    //     size_t npreds = dag_npreds(s->g, idx);
+    //     unsigned preds[npreds];
+    //     dag_preds(s->g, idx, preds);
+    //     for (size_t i = 0; i < npreds; i++) {
+    //         unsigned pred = preds[i];
+    //         if (bitmap_get(pred_inits, pred)) {
+    //             continue;
+    //         }
+    //         size_t nsuccs = dag_nsuccs(s->g, pred);
+    //         unsigned succs[nsuccs];
+    //         dag_succs(s->g, pred, succs);
+    //         int all_scheduled = 1;
+    //         for (size_t i = 0; i < nsuccs; i++) {
+    //             unsigned succ = succs[i];
+    //             if (bitmap_get(start_finished, succ) != 1) {
+    //                 all_scheduled = 0;
+    //                 break;
+    //             }
+    //         }
+    //         if (all_scheduled) {
+    //             idx_vec_push(&start_ready, pred);
+    //         }
+    //         bitmap_set(pred_inits, pred, 1);
+    //     }
+    // }
+
+    idx_vec_push(&start_ready, dag_sink(s->g));
     while (start_ready.size > 0) {
         unsigned idx;
         idx_vec_pop(&start_ready, &idx);
         end_visit(s->g, idx, &start_ready, start_finished, max_starts);
     }
-    bitmap_destroy(pred_inits);
     idx_vec_destroy(&start_ready);
     bitmap_destroy(start_finished);
     return 0;

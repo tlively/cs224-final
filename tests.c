@@ -180,13 +180,29 @@ void test_schedule(void) {
 
     schedule_destroy(perm3);
 
-    // test validity check
+    // test max start
+    unsigned starts[n_nodes];
     schedule *perm4 = schedule_create(graph, m);
     assert(perm4 != NULL);
     schedule_add(perm4, dag_source(graph));
-    schedule_add(perm4, k);
-    assert(!schedule_is_valid(perm4));
+    schedule_add(perm4, g);
+    schedule_add(perm4, a);
+    schedule_add(perm4, c);
+    schedule_add(perm4, d);
+    schedule_min_ends(perm4, starts);
+    assert(ends[b] == 3);
+    assert(ends[e] == 13);
+    assert(ends[k] == 49);
+
     schedule_destroy(perm4);
+
+    // test validity check
+    schedule *perm5 = schedule_create(graph, m);
+    assert(perm5 != NULL);
+    schedule_add(perm5, dag_source(graph));
+    schedule_add(perm5, k);
+    assert(!schedule_is_valid(perm5));
+    schedule_destroy(perm5);
 }
 
 void test_bitmap(void) {
