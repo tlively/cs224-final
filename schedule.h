@@ -38,7 +38,7 @@ int schedule_compute(schedule *s, unsigned *task_ends);
 // when possible and lower (upper) bound elsewhere. `min_ends'
 // (`max_starts') should be the same size as the dag.
 int schedule_min_ends(schedule *s, unsigned *min_ends);
-int schedule_max_starts(schedule *s, unsigned *max_starts);
+int schedule_max_starts(schedule *s, unsigned *max_starts, unsigned total_time);
 
 // calculate and return the Fernandez bound
 int schedule_fernandez_bound(schedule *s);

@@ -159,7 +159,8 @@ static void end_visit(dag *g, unsigned idx, idx_vec *end_ready,
 
 // calculate max_start
 static void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
-                      bitmap *start_finished, unsigned *max_starts) {
+                        bitmap *start_finished, unsigned *max_starts,
+                        unsigned total_time) {
     size_t npreds = dag_npreds(g, idx);
     unsigned preds[npreds];
     dag_preds(g, idx, preds);
@@ -181,7 +182,9 @@ static void start_visit(dag *g, unsigned idx, idx_vec *start_ready,
             }
             // all successors have calculated max_starts
             if (succs_complete) {
-                max_starts[pred] = min_max_start - dag_weight(g, pred);
+                max_starts[pred] =
+                    (min_max_start - dag_weight(g, pred) < total_time) ?
+                    min_max_start - dag_weight(g, pred) : total_time;
                 bitmap_set(start_finished, pred, 1);
                 idx_vec_push(start_ready, pred);
             }
@@ -250,7 +253,8 @@ int schedule_min_ends(schedule *s, unsigned *min_ends) {
 }
 
 // TODO: Start with sink, not scheduled.
-int schedule_max_starts(schedule *s, unsigned *max_starts) {
+int schedule_max_starts(schedule *s, unsigned *max_starts,
+                        unsigned total_time) {
     assert(s != NULL);
     assert(max_starts != NULL);
     idx_vec start_ready;
@@ -300,11 +304,13 @@ int schedule_max_starts(schedule *s, unsigned *max_starts) {
     //     }
     // }
 
+    max_starts[dag_sink(s->g)] = total_time;
     idx_vec_push(&start_ready, dag_sink(s->g));
     while (start_ready.size > 0) {
         unsigned idx;
         idx_vec_pop(&start_ready, &idx);
-        end_visit(s->g, idx, &start_ready, start_finished, max_starts);
+        start_visit(s->g, idx, &start_ready, start_finished, max_starts,
+                    total_time);
     }
     idx_vec_destroy(&start_ready);
     bitmap_destroy(start_finished);
