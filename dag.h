@@ -46,21 +46,4 @@ int dag_weight(dag *g, unsigned id);
 // only be called after dag_build.
 int dag_level(dag *g, unsigned id);
 
-// return the minimum possible completion time of the vertex with the
-// given `id'. This should only be called after dag_build.
-unsigned dag_min_end(dag *g, unsigned id);
-
-// return the maximum possible start time of the vertex with the given
-// `id'. This should only be called after dag_build.
-unsigned dag_max_start(dag *g, unsigned id);
-
-// return the size of the dag's completion time list
-size_t dag_comp_list_size(dag *g);
-
-// fills `buf' with the sorted list of minimum possible completion times
-// and maximum possible start times of all vertices. This should only be
-// called after dag_build. The size of `buf' should be twice the size
-// of the dag.
-void dag_comp_list(dag *g, unsigned *buf);
-
 #endif // DAG_H

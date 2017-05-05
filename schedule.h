@@ -30,7 +30,16 @@ size_t schedule_size(schedule *s);
 int schedule_is_complete(schedule *s);
 
 int schedule_is_valid(schedule *s);
-int schedule_length(schedule *s);
-int schedule_lower_bound(schedule *s);
+
+// task ends needs to be the size of the dag.
+int schedule_compute(schedule *s, unsigned *task_ends);
+
+// calculate end times of all tasks, using exact times when possible
+// and lower bound elsewhere. `min_ends' should be the same size as
+// the dag.
+int schedule_min_ends(schedule *s, unsigned *min_ends);
+
+// calculate and return the Fernandez bound
+int schedule_fernandez_bound(schedule *s);
 
 #endif // SCHEDULE_H
