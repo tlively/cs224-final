@@ -98,6 +98,7 @@ A --> B         I
        /       \ /
 C --> D   G --> H
 */
+
 void test_schedule(void) {
     printf("Testing schedule\n");
     dag *graph = dag_create();
@@ -125,36 +126,48 @@ void test_schedule(void) {
     unsigned k = dag_vertex(graph, 11, 1, &j);
     (void) k;
 
+    dag_build(graph, 100);
+
     unsigned m = 2;
-    schedule *perm1 = schedule_create(graph, m);
-    assert(perm1 != NULL);
-    for (unsigned i = 0; i < dag_size(graph); i++) {
-        schedule_add(perm1, i);
-    }
-    assert(schedule_is_valid(perm1));
-    schedule_destroy(perm1);
 
     schedule *perm2 = schedule_create(graph, m);
     assert(perm2 != NULL);
-    schedule_add(perm2, 0);
-    schedule_add(perm2, 2);
-    schedule_add(perm2, 1);
-    schedule_add(perm2, 3);
-    schedule_add(perm2, 4);
-    schedule_add(perm2, 6);
-    schedule_add(perm2, 5);
-    schedule_add(perm2, 7);
-    schedule_add(perm2, 8);
-    schedule_add(perm2, 9);
-    schedule_add(perm2, 10);
+
+    schedule_add(perm2, dag_source(graph));
+
+    assert(schedule_length(perm2) == 0);
+
+    schedule_add(perm2, a);
+    schedule_add(perm2, c);
+    schedule_add(perm2, b);
+
+    assert(schedule_length(perm2) == 3);
+
+    schedule_add(perm2, d);
+    schedule_add(perm2, e);
+
+    assert(schedule_length(perm2) == 12);
+
+    schedule_add(perm2, g);
+    schedule_add(perm2, f);
+    schedule_add(perm2, h);
+    schedule_add(perm2, i);
+    schedule_add(perm2, j);
+    schedule_add(perm2, k);
+
+    assert(schedule_length(perm2) == 48);
+
+    schedule_add(perm2, dag_sink(graph));
     assert(schedule_is_valid(perm2));
+
+    assert(schedule_length(perm2) == 48);
     schedule_destroy(perm2);
 
     schedule *perm3 = schedule_create(graph, m);
     assert(perm3 != NULL);
-    schedule_add(perm3, 0);
-    schedule_add(perm3, 10);
-    assert(schedule_is_valid(perm3));
+    schedule_add(perm3, dag_source(graph));
+    schedule_add(perm3, k);
+    assert(!schedule_is_valid(perm3));
     schedule_destroy(perm3);
 }
 

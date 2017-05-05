@@ -39,7 +39,7 @@ void schedule_destroy(schedule *s) {
 int schedule_add(schedule *s, unsigned idx) {
     assert(s != NULL);
     assert(idx < dag_size(s->g));
-    assert(s->order.size < dag_size(s->g) - 1);
+    assert(s->order.size < dag_size(s->g));
     return idx_vec_push(&s->order, idx);
 }
 
@@ -70,77 +70,62 @@ int schedule_is_valid(schedule *s) {
         unsigned preds[npreds];
         dag_preds(s->g, idx, preds);
         for (unsigned j = 0; j < npreds; j++) {
-            unsigned pred = s->order.data[j];
-            if (bitmap_get(prev_jobs, pred) != 1) {
+            if (bitmap_get(prev_jobs, preds[j]) != 1) {
+                bitmap_destroy(prev_jobs);
                 return 0;
             }
         }
         bitmap_set(prev_jobs, idx, 1);
     }
+    bitmap_destroy(prev_jobs);
     return 1;
 }
 
 int schedule_length(schedule *s) {
     assert(s != NULL);
+    struct {
+        int m;
+        int end;
+    } assignments[dag_size(s->g)];
+    memset(assignments, -1, dag_size(s->g) * sizeof(*assignments));
     int end_times[s->m];
     int cur_items[s->m];
     memset(end_times, 0, s->m * sizeof(int));
     memset(cur_items, 0, s->m * sizeof(int));
-    int preds_done[dag_size(s->g)];
-    memset(preds_done, 0, dag_size(s->g) * sizeof(int));
     for (size_t i = 0; i < s->order.size; i++) {
+        int cur_time = INT_MAX;
+        int cur_m = 0;
+        for (size_t i = 0; i < s->m; i++) {
+            if (end_times[i] < cur_time) {
+                cur_time = end_times[i];
+                cur_m = i;
+            }
+        }
         unsigned idx = s->order.data[i];
-        unsigned midx = (unsigned) -1;
-        // schedule immediately
-        if (preds_done[idx] == dag_npreds(s->g, idx)) {
-            int min_end_time = INT_MAX;
-            for (size_t m = 0; m < s->m; m++) {
-                if (end_times[m] < min_end_time) {
-                    min_end_time = end_times[m];
-                    midx = m;
-                }
+        size_t npreds = dag_npreds(s->g, idx);
+        unsigned preds[npreds];
+        dag_preds(s->g, idx, preds);
+        int max_pred_end = INT_MIN;
+        int max_pred_m = 0;
+        for (size_t i = 0; i < npreds; i++) {
+            if (assignments[preds[i]].end > max_pred_end) {
+                max_pred_end = assignments[preds[i]].end;
+                max_pred_m = assignments[preds[i]].m;
             }
         }
-        // or after dependencies finish
-        else {
-            bitmap *dep_set = bitmap_create(dag_size(s->g));
-            if (dep_set == NULL) {
-                return -1;
-            }
-            size_t ndeps = dag_npreds(s->g, idx);
-            unsigned deps[ndeps];
-            dag_preds(s->g, idx, deps);
-            for (size_t i = 0; i < ndeps; i++) {
-                bitmap_set(dep_set, deps[i], 1);
-            }
-            int max_end_time = INT_MIN;
-            for (size_t m = 0; m < s->m; m++) {
-                if (bitmap_get(dep_set, cur_items[m]) == 1 &&
-                    end_times[m] > max_end_time) {
-                    max_end_time = end_times[m];
-                    midx = m;
-                }
-            }
-            assert(max_end_time != INT_MIN);
-            bitmap_destroy(dep_set);
+        if (max_pred_end > cur_time) {
+            cur_m = max_pred_m;
+            cur_time = max_pred_end;
         }
-        assert(midx >= 0 && midx < s->m);
-        end_times[midx] += dag_weight(s->g, idx);
-        cur_items[midx] = idx;
-        size_t nsuccs = dag_nsuccs(s->g, idx);
-        unsigned succs[nsuccs];
-        dag_succs(s->g, idx, succs);
-        for (size_t i = 0; i < nsuccs; i++) {
-            preds_done[i]++;
-        }
+        assignments[idx].m = cur_m;
+        assignments[idx].end = cur_time + dag_weight(s->g, idx);
+        end_times[cur_m] = cur_time + dag_weight(s->g, idx);
     }
-    int max_end_time = INT_MIN;
-    for (size_t m = 0; m < s->m; m++) {
-        if (end_times[m] > max_end_time) {
-            max_end_time = end_times[m];
-        }
+    int final_time = -1;
+    for (size_t i = 0; i < s->m; i++) {
+        final_time = (end_times[i] > final_time) ? end_times[i] : final_time;
     }
-    return max_end_time;
+    return final_time;
 }
 
 int schedule_lower_bound(schedule *s) {
