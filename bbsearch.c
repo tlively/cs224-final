@@ -19,8 +19,7 @@ int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
         return (best_soln < sched_len) ? best_soln : sched_len;
     }
     unsigned fb = schedule_fernandez_bound(s);
-    if (fb > best_soln) {
-        printf("bounded!\n");
+    if (fb >= best_soln) {
         return best_soln;
     }
     binheap *sorter = binheap_create();
