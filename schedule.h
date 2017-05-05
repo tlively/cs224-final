@@ -19,6 +19,12 @@ schedule *schedule_create(dag *g, unsigned m);
 // the dependency graph it contains.
 void schedule_destroy(schedule *s);
 
+dag *schedule_dag(schedule *s);
+
+unsigned schedule_get(schedule *s, unsigned idx);
+
+unsigned schedule_contains(schedule *s, unsigned idx);
+
 // add or remove an item at the end of the schedule.
 int schedule_add(schedule *s, unsigned idx);
 int schedule_pop(schedule *s);

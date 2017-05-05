@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "dag.h"
+#include "bbsearch.h"
 #include "schedule.h"
 #include "bitmap.h"
 #include "binheap.h"
@@ -212,6 +213,53 @@ void test_schedule(void) {
     dag_destroy(graph);
 }
 
+void test_bbsearch(void) {
+    printf("Testing bbsearch\n");
+    dag *graph = dag_create();
+    assert(graph != NULL);
+
+    unsigned a = dag_vertex(graph, 1, 0, NULL);
+    unsigned b = dag_vertex(graph, 2, 1, &a);
+    unsigned c = dag_vertex(graph, 3, 0, NULL);
+    unsigned d = dag_vertex(graph, 4, 1, &c);
+
+    unsigned e_deps[] = {b,d};
+    unsigned e = dag_vertex(graph, 5, 2, e_deps);
+
+    unsigned f = dag_vertex(graph, 6, 1, &e);
+    unsigned g = dag_vertex(graph, 7, 0, NULL);
+
+    unsigned h_deps[] = {f,g};
+    unsigned h = dag_vertex(graph, 8, 2, h_deps);
+
+    unsigned i = dag_vertex(graph, 9, 1, &f);
+
+    unsigned j_deps[] = {h,i};
+    unsigned j = dag_vertex(graph, 10, 2, j_deps);
+
+    unsigned k = dag_vertex(graph, 11, 1, &j);
+    (void) k;
+
+    dag_build(graph);
+    assert(bbsearch(graph, 2) == 48);
+    dag_destroy(graph);
+
+    graph = dag_create();
+    assert(graph != NULL);
+    dag_vertex(graph, 5, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_vertex(graph, 2, 0, NULL);
+    dag_build(graph);
+
+    assert(bbsearch(graph, 2) == 8);
+    assert(bbsearch(graph, 3) == 6);
+    assert(bbsearch(graph, 4) == 5);
+    dag_destroy(graph);
+}
+
 void test_bitmap(void) {
     printf("Testing bitmap\n");
     bitmap *bm = bitmap_create(0);
@@ -298,4 +346,5 @@ int main(void) {
     test_bitmap();
     test_binheap();
     test_schedule();
+    test_bbsearch();
 }

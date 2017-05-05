@@ -1,6 +1,8 @@
 #ifndef BINHEAP_H
 #define BINHEAP_H
 
+#include <stdlib.h>
+
 struct binheap;
 typedef struct binheap binheap;
 

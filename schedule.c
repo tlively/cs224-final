@@ -11,6 +11,7 @@
 
 struct schedule {
     idx_vec order;
+    bitmap* contents;
     dag *g;
     unsigned m;
     unsigned length;
@@ -29,6 +30,11 @@ schedule *schedule_create(dag *g, unsigned m) {
         free(s);
         return NULL;
     }
+    s->contents = bitmap_create(0);
+    if (s->contents == NULL) {
+        idx_vec_destroy(&s->order);
+        return NULL;
+    }
     s->g = g;
     s->m = m;
     s->length = 0;
@@ -45,16 +51,42 @@ void schedule_destroy(schedule *s) {
     free(s);
 }
 
+dag *schedule_dag(schedule *s) {
+    assert(s != NULL);
+    return s->g;
+}
+
+unsigned schedule_get(schedule *s, unsigned idx) {
+    assert(s != NULL);
+    assert(idx < schedule_size(s));
+    return s->order.data[idx];
+}
+
+unsigned schedule_contains(schedule *s, unsigned idx) {
+    assert(s != NULL);
+    assert(idx < dag_size(s->g));
+    return bitmap_get(s->contents, idx);
+}
+
 int schedule_add(schedule *s, unsigned idx) {
     assert(s != NULL);
     assert(idx < dag_size(s->g));
     assert(s->order.size < dag_size(s->g));
-    return idx_vec_push(&s->order, idx);
+    if (bitmap_set(s->contents, idx, 1) != 0) {
+        bitmap_set(s->contents, idx, 0);
+        return -1;
+    }
+    if (idx_vec_push(&s->order, idx) != 0) {
+        bitmap_set(s->contents, idx, 0);
+        return -1;
+    }
+    return 0;
 }
 
 int schedule_pop(schedule *s) {
     assert(s != NULL);
     assert(s->order.size > 0);
+    bitmap_set(s->contents, s->order.data[s->order.size - 1], 0);
     return idx_vec_pop(&s->order, NULL);
 }
 
