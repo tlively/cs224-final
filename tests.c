@@ -89,6 +89,14 @@ void test_dag(void) {
     assert(h_preds[0] == f || h_preds[1] == f);
     assert(h_preds[0] == g || h_preds[1] == g);
 
+    unsigned size = dag_comp_list_size(graph);
+    unsigned comp_list[size];
+    dag_comp_list(graph, &comp_list);
+    assert(comp_list[0] == 0);
+    assert(comp_list[size-1] == 100);
+    assert(comp_list[10] == 52);
+    assert(comp_list[17] == 71);
+
     dag_destroy(graph);
 }
 
