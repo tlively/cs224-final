@@ -7,6 +7,7 @@
 #include "schedule.h"
 #include "bitmap.h"
 #include "binheap.h"
+#include "parser.h"
 
 /*
 A --> B         I
@@ -266,6 +267,32 @@ void test_bbsearch(void) {
     dag_destroy(graph);
 }
 
+void test_parser(void) {
+    printf("Testing parser\n");
+    dag *g;
+    int err = parse_patterson("test.rcp", &g);
+    assert(err == 0);
+    assert(dag_size(g) == 7);
+    assert(dag_weight(g, 1) == 3);
+    assert(dag_weight(g, 2) == 8);
+    assert(dag_weight(g, 3) == 10);
+    assert(dag_weight(g, 4) == 2);
+    assert(dag_weight(g, 5) == 10);
+    size_t n_sink_preds = dag_npreds(g, dag_sink(g));
+    assert(n_sink_preds == 3);
+    unsigned sink_preds[n_sink_preds];
+    dag_preds(g, dag_sink(g), sink_preds);
+    assert(sink_preds[0] == 4 || sink_preds[1] == 4 || sink_preds[2] == 4);
+    assert(sink_preds[0] == 3 || sink_preds[1] == 3 || sink_preds[2] == 3);
+    assert(sink_preds[0] == 5 || sink_preds[1] == 5 || sink_preds[2] == 5);
+    size_t n_preds = dag_npreds(g, 3);
+    assert(n_preds == 1);
+    unsigned pred;
+    dag_preds(g, 3, &pred);
+    assert(pred == 2);
+    dag_destroy(g);
+}
+
 void test_bitmap(void) {
     printf("Testing bitmap\n");
     bitmap *bm = bitmap_create(0);
@@ -353,4 +380,5 @@ int main(void) {
     test_binheap();
     test_schedule();
     test_bbsearch();
+    test_parser();
 }
