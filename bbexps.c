@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     }
 
     clock_t start = clock();
-    int result = bbsearch(g, m);
+    int result = bbsearch(g, m, 5);
     clock_t end = clock();
     double t = ((double)end - (double)start) / CLOCKS_PER_SEC;
 

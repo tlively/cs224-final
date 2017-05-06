@@ -248,7 +248,7 @@ void test_bbsearch(void) {
     (void) k;
 
     dag_build(graph);
-    // assert(bbsearch(graph, 2) == 48);
+    assert(bbsearch(graph, 2, -1) == 48);
     dag_destroy(graph);
 
     graph = dag_create();
@@ -261,9 +261,9 @@ void test_bbsearch(void) {
     dag_vertex(graph, 2, 0, NULL);
     dag_build(graph);
 
-    assert(bbsearch(graph, 2) == 8);
-    assert(bbsearch(graph, 3) == 6);
-    assert(bbsearch(graph, 4) == 5);
+    assert(bbsearch(graph, 2, -1) == 8);
+    assert(bbsearch(graph, 3, -1) == 6);
+    assert(bbsearch(graph, 4, -1) == 5);
     dag_destroy(graph);
 }
 

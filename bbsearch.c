@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <limits.h>
+#include <time.h>
 
 #include "binheap.h"
 #include "bitmap.h"
@@ -7,8 +8,14 @@
 #include "schedule.h"
 #include "bbsearch.h"
 
+static int do_timeout;
+static clock_t end_time;
+
 int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
     assert(s != NULL);
+    if (do_timeout && clock() >= end_time) {
+        return -2;
+    }
     dag *g = schedule_dag(s);
     if (schedule_build(s, 0) != 0) {
         return -1;
@@ -62,11 +69,11 @@ int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
         }
 
         bitmap_set(ready_set, new_idx, 0);
-        unsigned soln = bb(s, ready_set, best_soln);
+        int soln = bb(s, ready_set, best_soln);
         bitmap_set(ready_set, new_idx, 1);
-        if (soln == -1) {
+        if (soln < 0) {
             binheap_destroy(sorter);
-            return -1;
+            return soln;
         }
         best_soln = (best_soln < soln) ? best_soln : soln;
         while (new_ready.size > 0) {
@@ -82,7 +89,7 @@ int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
     return best_soln;
 }
 
-int bbsearch(dag *g, unsigned m) {
+int bbsearch(dag *g, unsigned m, int timeout) {
     assert(g != NULL);
     schedule *s = schedule_create(g, m);
     if (s == NULL) {
@@ -94,6 +101,15 @@ int bbsearch(dag *g, unsigned m) {
         schedule_destroy(s);
         return -1;
     }
+
+    if (timeout < 0) {
+        do_timeout = 0;
+    }
+    else {
+        do_timeout = 1;
+        end_time = clock() + timeout * CLOCKS_PER_SEC;
+    }
+
     size_t nsuccs = dag_nsuccs(g, dag_source(g));
     unsigned succs[nsuccs];
     dag_succs(g, dag_source(g), succs);
