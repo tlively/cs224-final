@@ -381,4 +381,24 @@ int main(void) {
     test_schedule();
     test_bbsearch();
     test_parser();
+
+    printf("Parsing data\n");
+    dag *g;
+    if (parse_patterson("data50/Pat0.rcp", &g) != 0) {
+        printf("Parse failed\n");
+        return 1;
+    }
+    printf("Parsed\n\n\n");
+    print_dot(g, "data20.0");
+    printf("\n\n\n");
+
+    int result;
+
+    printf("Scheduling on 4 machines:\n");
+    result = bbsearch(g, 4);
+    printf("%d\n", result);
+
+    printf("Scheduling on 8 machine:\n");
+    result = bbsearch(g, 8);
+    printf("%d\n", result);
 }

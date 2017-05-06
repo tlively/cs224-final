@@ -7,4 +7,6 @@
 // dag in `g'. Return 0 on success and -1 on failure.
 int parse_patterson(const char *fp, dag **g);
 
+void print_dot(dag *g, const char *name);
+
 #endif // PARSER_H

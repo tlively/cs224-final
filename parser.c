@@ -7,7 +7,6 @@
 #include "dag.h"
 #include "parser.h"
 
-#define BUF_SIZE (4096)
 
 int parse_patterson(const char *fp, dag **ret_g) {
     FILE *f = fopen(fp, "r");
@@ -77,4 +76,18 @@ int parse_patterson(const char *fp, dag **ret_g) {
     dag_build(g);
     *ret_g = g;
     return 0;
+}
+
+void print_dot(dag *g, const char *name) {
+    assert(g != NULL);
+    printf("digraph %s {\n", name);
+    for (size_t i = 0, size = dag_size(g); i < size; i++) {
+        size_t nsuccs = dag_nsuccs(g, i);
+        unsigned succs[nsuccs];
+        dag_succs(g, i, succs);
+        for (size_t j = 0; j < nsuccs; j++) {
+            printf("\t%zu -> %u;\n", i, succs[j]);
+        }
+    }
+    printf("}\n");
 }
