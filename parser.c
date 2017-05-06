@@ -59,11 +59,6 @@ int parse_patterson(const char *fp, dag **ret_g) {
     }
 
     for (size_t i = 1; i < n_nodes - 1; i++) {
-        printf("node %zu: w = %d, preds = {", i, node_lens[i]);
-        for (size_t j = 0; j < node_preds[i].size; j++) {
-            printf("%u, ", node_preds[i].data[j]);
-        }
-        printf("}\n");
         unsigned v =
             dag_vertex(g, node_lens[i], node_preds[i].size, node_preds[i].data);
         assert(v == i);
