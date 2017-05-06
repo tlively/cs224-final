@@ -27,9 +27,11 @@ int main(int argc, char **argv) {
     }
 
     clock_t start = clock();
-    int result = bbsearch(g, m, 5);
+    int result = bbsearch(g, m, 60);
     clock_t end = clock();
     double t = ((double)end - (double)start) / CLOCKS_PER_SEC;
 
-    printf("%s, %u, %d, %f\n", argv[1], m, result, t);
+    // file, # nodes, m, schedule length, scheduling time
+    printf("%s, %zu, %u, %d, %f\n", argv[1], dag_size(g) - 2, m, result, t);
+    dag_destroy(g);
 }
