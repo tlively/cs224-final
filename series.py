@@ -56,8 +56,8 @@ def runSeries():
                         break
 
 def run100():
-    n_dags = 100
-    machines = [16, 20, 24, 28, 32]
+    n_dags = 50
+    machines = [12, 16, 20, 24, 28, 32]
     for bound in bounds:
         make_clean()
         make(bounds[bound])
@@ -69,7 +69,7 @@ def run100():
 
 def main():
     run100()
-    # runSeries()
+    runSeries()
 
 if __name__ == "__main__":
     main()
