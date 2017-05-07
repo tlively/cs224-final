@@ -75,7 +75,7 @@ def gen_graphs(fp):
         width = .8 / len(bounds)
         rects = [ax.bar([n+width*i for n in ns], percents[bounds[i]], width)
                  for i in range(len(bounds))]
-        ax.set_ylabel("% completed")
+        ax.set_ylabel("Percent completed")
         ax.set_xlabel("number of vertices")
         ax.set_title("Percent of DAGs scheduled in 1 minute (m = {})".format(m))
         ax.set_xticks([n + .4 / len(bounds) for n in ns])
@@ -91,12 +91,54 @@ def gen_graphs(fp):
     # plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
     # plt.show()
 
+def gen_boxplot(fp):
+    times = []
+    timed_out_nodes = [0 for i in range(12,26)]
+    nodes = {}
+
+    with open(fp, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            l = line.split(',')
+            l = l[1:] # we don't care about the test file
+            node = int(l[0])
+            m = int(l[1])
+            schedule_length = int(l[2])
+            scheduling_time = float(l[3])
+            bound = str(l[4])
+
+            if m != 16:
+                continue
+
+            if 'Fujita' in bound:
+                continue
+
+            if schedule_length < 0:
+                timed_out_nodes[node - 12] += 1
+            
+            times.append(scheduling_time)
+            if node in nodes.keys():
+                nodes[node].append(scheduling_time)
+            else:
+                nodes[node] = []
+
+    node_values = [nodes[i] for i in range(12,26) if i in nodes.keys()]
+
+    meanpointprops = dict(marker='D', markeredgecolor='black',
+                      markerfacecolor='firebrick')
+    plt.boxplot(node_values, meanprops=meanpointprops)
+    plt.title('Results for Fernandez Bound with m=16')
+    plt.xlabel('# of Nodes')
+    plt.ylabel('Time to Schedule')
+    plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
+    plt.show()
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: {} <file>".format(sys.argv[0]))
         sys.exit(1)
-    gen_graphs(sys.argv[1])
-
+    # gen_graphs(sys.argv[1])
+    gen_boxplot(sys.argv[1])
 # fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
 
 # meanpointprops = dict(marker='D', markeredgecolor='black',
