@@ -91,7 +91,7 @@ def gen_graphs(fp):
     # plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
     # plt.show()
 
-def gen_boxplot(fp):
+def gen_boxplot(fp, b='Fujita'):
     times = []
     timed_out_nodes = [0 for i in range(12,26)]
     nodes = {}
@@ -110,7 +110,7 @@ def gen_boxplot(fp):
             if m != 16:
                 continue
 
-            if 'Fujita' in bound:
+            if b in bound:
                 continue
 
             if schedule_length < 0:
@@ -127,7 +127,7 @@ def gen_boxplot(fp):
     meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
     plt.boxplot(node_values, meanprops=meanpointprops)
-    plt.title('Results for Fernandez Bound with m=16')
+    plt.title('Results for {} Bound with m=16'.format(b))
     plt.xlabel('# of Nodes')
     plt.ylabel('Time to Schedule')
     plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
@@ -139,3 +139,24 @@ if __name__ == "__main__":
         sys.exit(1)
     gen_graphs(sys.argv[1])
     gen_boxplot(sys.argv[1])
+    gen_boxplot(sys.argv[1], 'Fernandez')
+# fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
+
+# meanpointprops = dict(marker='D', markeredgecolor='black',
+#                       markerfacecolor='firebrick')
+
+# axes[0, 0].boxplot(np.array([[1,2,3,4],[3,6,3,7]]), meanprops=meanpointprops, meanline=False,
+#                    showmeans=True)
+# axes[0, 0].set_title('Default', fontsize=fs)
+
+# axes[0, 1].boxplot([[1,2,3,4],[3,6,3,7]], meanprops=meanpointprops, meanline=False,
+#                    showmeans=True)
+# axes[0, 1].set_title('Default', fontsize=fs)
+
+# for ax in axes.flatten():
+#     ax.set_yscale('log')
+#     ax.set_yticklabels([])
+
+# fig.subplots_adjust(hspace=0.4)
+# plt.title('Results')
+# plt.show()
