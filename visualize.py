@@ -140,23 +140,3 @@ if __name__ == "__main__":
     gen_graphs(sys.argv[1])
     gen_boxplot(sys.argv[1])
     gen_boxplot(sys.argv[1], 'Fernandez')
-# fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
-
-# meanpointprops = dict(marker='D', markeredgecolor='black',
-#                       markerfacecolor='firebrick')
-
-# axes[0, 0].boxplot(np.array([[1,2,3,4],[3,6,3,7]]), meanprops=meanpointprops, meanline=False,
-#                    showmeans=True)
-# axes[0, 0].set_title('Default', fontsize=fs)
-
-# axes[0, 1].boxplot([[1,2,3,4],[3,6,3,7]], meanprops=meanpointprops, meanline=False,
-#                    showmeans=True)
-# axes[0, 1].set_title('Default', fontsize=fs)
-
-# for ax in axes.flatten():
-#     ax.set_yscale('log')
-#     ax.set_yticklabels([])
-
-# fig.subplots_adjust(hspace=0.4)
-# plt.title('Results')
-# plt.show()
