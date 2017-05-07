@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <time.h>
+#include <stdio.h>
 
 #include "binheap.h"
 #include "bitmap.h"
@@ -10,6 +11,41 @@
 
 static int do_timeout;
 static clock_t end_time;
+
+int fujita_bound(schedule *s) {
+    dag *g = schedule_dag(s);
+    unsigned delta = 1;
+    while (1) {
+        /* printf("loop1\n"); */
+        schedule_build(s, dag_level(g, dag_source(g)) + delta);
+        int min_m = schedule_machine_bound(s);
+        /* printf("delta: %d, min_m: %d, m: %d\n", delta, min_m, schedule_m(s)); */
+        if (min_m <= schedule_m(s)) {
+            break;
+        }
+        delta = delta * 2;
+        assert(delta != 0);
+    }
+    int low_time = dag_level(g, dag_source(g)) + delta / 2;
+    int high_time = dag_level(g, dag_source(g)) + delta;
+    int best_time = high_time;
+    while (1) {
+        int cur_time = (high_time - low_time) / 2 + low_time;
+        if (cur_time == low_time) {
+            break;
+        }
+        schedule_build(s, cur_time);
+        int min_m = schedule_machine_bound(s);
+        if (min_m <= schedule_m(s)) {
+            high_time = cur_time;
+            best_time = (best_time < cur_time) ? best_time : cur_time;
+        }
+        else {
+            low_time = cur_time;
+        }
+    }
+    return best_time;
+}
 
 int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
     assert(s != NULL);
@@ -25,11 +61,18 @@ int bb(schedule *s, bitmap *ready_set, unsigned best_soln) {
         return (best_soln < sched_len) ? best_soln : sched_len;
     }
 #ifdef FUJITA
+#ifdef FB
     unsigned fb = schedule_fernandez_bound(s);
     if (fb >= best_soln) {
         return best_soln;
     }
-#endif
+#else // no FB
+    unsigned mb = fujita_bound(s);
+    if (mb >= best_soln) {
+        return best_soln;
+    }
+#endif // FB
+#endif // FUJITA
     binheap *sorter = binheap_create();
     if (sorter == NULL) {
         return -1;

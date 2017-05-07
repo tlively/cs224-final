@@ -59,9 +59,7 @@ int parse_patterson(const char *fp, dag **ret_g) {
     }
 
     for (size_t i = 1; i < n_nodes - 1; i++) {
-        unsigned v =
-            dag_vertex(g, node_lens[i], node_preds[i].size, node_preds[i].data);
-        assert(v == i);
+        dag_vertex(g, node_lens[i], node_preds[i].size, node_preds[i].data);
     }
 
     for (size_t i = 0; i < n_nodes; i++) {

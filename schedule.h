@@ -20,9 +20,8 @@ schedule *schedule_create(dag *g, unsigned m);
 void schedule_destroy(schedule *s);
 
 dag *schedule_dag(schedule *s);
-
+unsigned schedule_m(schedule *s);
 unsigned schedule_get(schedule *s, unsigned idx);
-
 unsigned schedule_contains(schedule *s, unsigned idx);
 
 // add or remove an item at the end of the schedule.
@@ -50,6 +49,10 @@ unsigned schedule_min_end(schedule *s, unsigned id);
 
 // calculate and return the Fernandez bound
 int schedule_fernandez_bound(schedule *s);
+
+// use Fujita's binary search method
+int schedule_machine_bound(schedule *s);
+
 #endif // FUJITA
 
 #endif // SCHEDULE_H

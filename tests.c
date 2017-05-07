@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -382,3 +385,5 @@ int main(void) {
     test_bbsearch();
     test_parser();
 }
+
+#pragma GCC diagnostic pop

@@ -56,6 +56,11 @@ dag *schedule_dag(schedule *s) {
     return s->g;
 }
 
+unsigned schedule_m(schedule *s) {
+    assert(s != NULL);
+    return s->m;
+}
+
 unsigned schedule_get(schedule *s, unsigned idx) {
     assert(s != NULL);
     assert(idx < schedule_size(s));
@@ -294,6 +299,11 @@ static int schedule_max_starts(schedule *s, unsigned *max_starts,
     }
     idx_vec_destroy(&start_ready);
     bitmap_destroy(start_finished);
+
+    int diff = total_time - dag_level(s->g, dag_source(s->g));
+    for (size_t i = 0; i < dag_size(s->g); i++) {
+        max_starts[i] += diff;
+    }
     return 0;
 }
 
@@ -341,8 +351,7 @@ unsigned schedule_min_end(schedule *s, unsigned id) {
     return s->min_ends[id];
 }
 
-int schedule_fernandez_bound(schedule *s) {
-    assert(s != NULL);
+static void get_comp_list(schedule *s, idx_vec *comp_list) {
     binheap *sorter = binheap_create();
     for (size_t i = 0; i < dag_size(s->g); i++) {
         unsigned max_start = schedule_max_start(s, i);
@@ -350,40 +359,72 @@ int schedule_fernandez_bound(schedule *s) {
         binheap_put(sorter, max_start, -((int) max_start));
         binheap_put(sorter, min_end, -((int) min_end));
     }
-    idx_vec comp_list;
-    idx_vec_init(&comp_list, 0);
-    idx_vec_push(&comp_list, binheap_get(sorter));
+    idx_vec_push(comp_list, binheap_get(sorter));
     while (binheap_size(sorter) > 0) {
         unsigned c = binheap_get(sorter);
-        if (c != comp_list.data[comp_list.size - 1]) {
-            idx_vec_push(&comp_list, c);
+        if (c != comp_list->data[comp_list->size - 1]) {
+            idx_vec_push(comp_list, c);
         }
     }
     binheap_destroy(sorter);
+}
+
+static int work_density(schedule *s, unsigned ci, unsigned cj) {
+    assert(s != NULL);
+    int work_density = 0;
+    // TODO: Compute this is constant time
+    for (size_t k = 0, n_nodes = dag_size(s->g); k < n_nodes; k++) {
+        if (schedule_max_start(s, k) < cj &&
+            schedule_min_end(s, k) > ci) {
+            int case1 = schedule_min_end(s, k) - ci;
+            int case2 = dag_weight(s->g, k);
+            int case3 = cj - schedule_max_start(s, k);
+            int case4 = cj - ci;
+            int min1 = (case1 < case2) ? case1 : case2;
+            int min2 = (case3 < case4) ? case3 : case4;
+            work_density += (min1 < min2) ? min1 : min2;
+        }
+    }
+    return work_density;
+}
+
+int schedule_fernandez_bound(schedule *s) {
+    assert(s != NULL);
+    idx_vec comp_list;
+    idx_vec_init(&comp_list, 0);
+    get_comp_list(s, &comp_list);
 
     int max_q = INT_MIN;
     for (size_t i = 0; i < comp_list.size - 1; i++) {
         for (size_t j = i + 1; j < comp_list.size; j++) {
-            int work_density = 0;
-            // TODO: Compute this is constant time
-            for (size_t k = 0, n_nodes = dag_size(s->g); k < n_nodes; k++) {
-                if (schedule_max_start(s, k) < comp_list.data[j] &&
-                    schedule_min_end(s, k) > comp_list.data[i]) {
-                    int case1 = schedule_min_end(s, k) - comp_list.data[i];
-                    int case2 = dag_weight(s->g, k);
-                    int case3 = comp_list.data[j] - schedule_max_start(s, k);
-                    int case4 = comp_list.data[j] - comp_list.data[i];
-                    int min1 = (case1 < case2) ? case1 : case2;
-                    int min2 = (case3 < case4) ? case3 : case4;
-                    work_density += (min1 < min2) ? min1 : min2;
-                }
-            }
+            int w_density = work_density(s, comp_list.data[i],
+                                         comp_list.data[j]);
             int cur_q = (comp_list.data[i] - comp_list.data[j]) +
-                work_density / s->m + (work_density % s->m != 0);
+                w_density / s->m + (w_density % s->m != 0);
             max_q = (cur_q > max_q) ? cur_q : max_q;
         }
     }
-
+    idx_vec_destroy(&comp_list);
     int crit_path = dag_level(s->g, dag_source(s->g));
     return (max_q > 0) ? crit_path + max_q : crit_path;
+}
+
+int schedule_machine_bound(schedule *s) {
+    assert(s != NULL);
+    idx_vec comp_list;
+    idx_vec_init(&comp_list, 0);
+    get_comp_list(s, &comp_list);
+
+    int max_m = INT_MIN;
+    for (size_t i = 0; i < comp_list.size - 1; i++) {
+        for (size_t j = i + 1; j < comp_list.size; j++) {
+            int w_density = work_density(s, comp_list.data[i],
+                                         comp_list.data[j]);
+            int interval = (comp_list.data[j] - comp_list.data[i]);
+            int cur_m = w_density / interval + (w_density % interval != 0);
+            max_m = (cur_m > max_m) ? cur_m : max_m;
+        }
+    }
+    idx_vec_destroy(&comp_list);
+    return max_m;
 }
