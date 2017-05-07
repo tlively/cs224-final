@@ -31,6 +31,6 @@ $(EXEC): $(OBJS) $(EXEC_OBJS)
 	$(CC) -o $@ $(CFLAGS) $^
 
 clean:
-	rm -f $(OBJS) $(TEST_OBJS) $(TEST) $(EXEC)
+	rm -f $(OBJS) $(TEST_OBJS) $(EXEC_OBJS) $(TEST) $(EXEC)
 
 .PHONY: clean
