@@ -78,7 +78,7 @@ def gen_graphs(fp):
         ax.set_ylabel("Percent completed")
         ax.set_xlabel("number of vertices")
         ax.set_title("Percent of DAGs scheduled in 1 minute (m = {})".format(m))
-        ax.set_xticks([n + .4 for n in ns])
+        ax.set_xticks([n + width*(len(bounds)-1)/2 for n in ns])
         ax.set_xticklabels([str(n) for n in ns])
         ax.legend(rects, bounds)
 
