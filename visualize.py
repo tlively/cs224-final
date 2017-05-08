@@ -113,7 +113,7 @@ def gen_boxplot(fp, m, x, b='Fujita'):
             if b not in bound:
                 continue
 
-            if schedule_length < 0:
+            if schedule_length < 0 or scheduling_time > 0.06:
                 continue
 
             times.append(scheduling_time)
@@ -122,14 +122,14 @@ def gen_boxplot(fp, m, x, b='Fujita'):
             else:
                 nodes[node] = []
 
-    node_values = [nodes[i] for i in range(100,151,5) if i in nodes.keys()]
+    node_values = [nodes[i] for i in range(12,26) if i in nodes.keys()]
 
     meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
     axes = plt.gca()
-    axes.set_ylim([0,3])
+    # axes.set_ylim([0,3])
     plt.boxplot(node_values, meanprops=meanpointprops)
-    plt.xticks([i for i in range(1,12, 2)], [i for i in range(100,151,10)])
+    plt.xticks([i for i in range(1,15, 2)], [i for i in range(12,26, 2)])
     plt.subplot(gs[x])
 
 def gen_machineplot(fp, b='Fernandez'):
@@ -172,16 +172,14 @@ if __name__ == "__main__":
     fig = plt.figure() 
     gs = gridspec.GridSpec(2, 2)
 
-    gen_boxplot(sys.argv[1], 24, 0, b="Fernandez")
-    gen_boxplot(sys.argv[1], 32, 1, b="Fernandez")
-    gen_boxplot(sys.argv[1], 36, 2, b="Fernandez")
-    gen_boxplot(sys.argv[1], 40, 3, b="Fernandez")
-    gen_boxplot(sys.argv[1], 36, 3, b="Fernandez")
-
+    gen_boxplot(sys.argv[1], 4, 0, b="Fujita")
+    gen_boxplot(sys.argv[1], 8, 1, b="Fujita")
+    gen_boxplot(sys.argv[1], 16, 2, b="Fujita")
+    gen_boxplot(sys.argv[1], 4, 0, b="Fujita")
     # fig.add_subplot(fuj1) 
     # fig.add_subplot(fuj2) 
     # fig.add_subplot(fuj3) 
     # fig.add_subplot(fuj4)
-    fig.suptitle('Fernandez Bound on m=24,32,36,40')
-    plt.savefig('Fernandez Large.png')
+    fig.suptitle('Fujita Bound on m=4,8,16')
+    plt.savefig('Fujita Small.png')
 
