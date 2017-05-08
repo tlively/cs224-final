@@ -172,15 +172,16 @@ if __name__ == "__main__":
     fig = plt.figure() 
     gs = gridspec.GridSpec(2, 2)
 
-    gen_boxplot(sys.argv[1], 24, 0)
-    gen_boxplot(sys.argv[1], 32, 1)
-    gen_boxplot(sys.argv[1], 36, 2)
-    gen_boxplot(sys.argv[1], 40, 3)
-    gen_boxplot(sys.argv[1], 36, 3)
+    gen_boxplot(sys.argv[1], 24, 0, b="Fernandez")
+    gen_boxplot(sys.argv[1], 32, 1, b="Fernandez")
+    gen_boxplot(sys.argv[1], 36, 2, b="Fernandez")
+    gen_boxplot(sys.argv[1], 40, 3, b="Fernandez")
+    gen_boxplot(sys.argv[1], 36, 3, b="Fernandez")
 
     # fig.add_subplot(fuj1) 
     # fig.add_subplot(fuj2) 
     # fig.add_subplot(fuj3) 
-    # fig.add_subplot(fuj4) 
-    plt.savefig('Fujita Large.png')
+    # fig.add_subplot(fuj4)
+    fig.suptitle('Fernandez Bound on m=24,32,36,40')
+    plt.savefig('Fernandez Large.png')
 
