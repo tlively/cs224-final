@@ -57,10 +57,15 @@ An example producing an image might look like
 ### Experiments
 To run the experiments from the paper run
 ```
-python3 series.py
+python3 experiments.py
 ```
 
 This will automatically build the scheduler with the Fernandez bound and with with Fujita's binary search bound and run each on the dataset of generated DAGs. These DAGs were generated using the RanGen 1 tool from Demeulemeester, E., Vanhoucke, M. and Herroelen, W., 2003, "A random network generator for activity-on-the-node networks", Journal of Scheduling, 6, 13-34. The generator was downloaded from [http://www.projectmanagement.ugent.be/?q=research/data/RanGen](http://www.projectmanagement.ugent.be/?q=research/data/RanGen)
+
+To generate graphs, save the output of the experiments in a file and run
+```
+python3 visualize.py <data file>
+```
 
 ## Data Format
 The Patterson format is used for specifying graphs for the Resource Constrained Project Scheduling Problem, which is a generalization of the DAG scheduling problem we solve. The RCPSP is a common problem in operations research.
