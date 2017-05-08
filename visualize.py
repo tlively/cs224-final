@@ -91,7 +91,7 @@ def gen_graphs(fp):
     # plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
     # plt.show()
 
-def gen_boxplot(fp, b='Fujita'):
+def gen_boxplot(fp, b='Fujita', m=16):
     times = []
     timed_out_nodes = [0 for i in range(12,26)]
     nodes = {}
@@ -102,12 +102,12 @@ def gen_boxplot(fp, b='Fujita'):
             l = line.split(',')
             l = l[1:] # we don't care about the test file
             node = int(l[0])
-            m = int(l[1])
+            machines = int(l[1])
             schedule_length = int(l[2])
             scheduling_time = float(l[3])
             bound = str(l[4])
 
-            if m != 16:
+            if machines != m:
                 continue
 
             if b in bound:
@@ -122,7 +122,7 @@ def gen_boxplot(fp, b='Fujita'):
             else:
                 nodes[node] = []
 
-    node_values = [nodes[i] for i in range(12,26) if i in nodes.keys()]
+    # node_values = [nodes[i] for i in range(12,26) if i in nodes.keys()]
 
     meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
@@ -133,13 +133,46 @@ def gen_boxplot(fp, b='Fujita'):
     plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
     plt.show()
 
+def gen_machineplot(fp, b='Fernandez'):
+    nodes = {}
+
+    with open(fp, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            l = line.split(',')
+            l = l[1:] # we don't care about the test file
+            node = int(l[0])
+            machines = int(l[1])
+            schedule_length = int(l[2])
+            scheduling_time = float(l[3])
+            bound = str(l[4])
+
+            if b in bound:
+                continue
+
+            if machines in nodes.keys():
+                nodes[machines].append(scheduling_time)
+            else:
+                nodes[machines] = []
+
+    node_values = [nodes[i] for i in [16, 20, 24, 28, 32] if i in nodes.keys()]
+
+    meanpointprops = dict(marker='D', markeredgecolor='black',
+                      markerfacecolor='firebrick')
+    plt.boxplot(node_values, meanprops=meanpointprops)
+    plt.title('Results for Fujita Bound with n=100'.format(b))
+    plt.xlabel('# of Machines')
+    plt.ylabel('Time to Schedule')
+    plt.xticks([i for i in range(1,6)], [i for i in [16, 20, 24, 28, 32]])
+    return plt
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: {} <file>".format(sys.argv[0]))
         sys.exit(1)
-    # gen_graphs(sys.argv[1])
-    gen_boxplot(sys.argv[1])
-    gen_boxplot(sys.argv[1], 'Fernandez')
+    # fuj16 = gen_boxplot(sys.argv[1], b='Fujita', m=16)
+    fuj20 = gen_machineplot(sys.argv[1])
+    fuj20.show()
 # fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
 
 # meanpointprops = dict(marker='D', markeredgecolor='black',
