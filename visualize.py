@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import numpy as np
 import sys
 
@@ -91,9 +92,8 @@ def gen_graphs(fp):
     # plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
     # plt.show()
 
-def gen_boxplot(fp, b='Fujita', m=16):
+def gen_boxplot(fp, m, x, b='Fujita'):
     times = []
-    timed_out_nodes = [0 for i in range(12,26)]
     nodes = {}
 
     with open(fp, 'r') as f:
@@ -110,11 +110,11 @@ def gen_boxplot(fp, b='Fujita', m=16):
             if machines != m:
                 continue
 
-            if b in bound:
+            if b not in bound:
                 continue
 
             if schedule_length < 0:
-                timed_out_nodes[node - 12] += 1
+                continue
 
             times.append(scheduling_time)
             if node in nodes.keys():
@@ -122,16 +122,15 @@ def gen_boxplot(fp, b='Fujita', m=16):
             else:
                 nodes[node] = []
 
-    # node_values = [nodes[i] for i in range(12,26) if i in nodes.keys()]
+    node_values = [nodes[i] for i in range(100,151,5) if i in nodes.keys()]
 
     meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
+    axes = plt.gca()
+    axes.set_ylim([0,3])
     plt.boxplot(node_values, meanprops=meanpointprops)
-    plt.title('Results for {} Bound with m=16'.format(b))
-    plt.xlabel('# of Nodes')
-    plt.ylabel('Time to Schedule')
-    plt.xticks([i for i in range(1,15)], [i for i in range(12,26)])
-    plt.show()
+    plt.xticks([i for i in range(1,12, 2)], [i for i in range(100,151,10)])
+    plt.subplot(gs[x])
 
 def gen_machineplot(fp, b='Fernandez'):
     nodes = {}
@@ -160,7 +159,6 @@ def gen_machineplot(fp, b='Fernandez'):
     meanpointprops = dict(marker='D', markeredgecolor='black',
                       markerfacecolor='firebrick')
     plt.boxplot(node_values, meanprops=meanpointprops)
-    plt.title('Results for Fujita Bound with n=100'.format(b))
     plt.xlabel('# of Machines')
     plt.ylabel('Time to Schedule')
     plt.xticks([i for i in range(1,6)], [i for i in [16, 20, 24, 28, 32]])
@@ -171,6 +169,18 @@ if __name__ == "__main__":
         print("Usage: {} <file>".format(sys.argv[0]))
         sys.exit(1)
 
-    fuj20 = gen_machineplot(sys.argv[1])
-    fuj20.show()
+    fig = plt.figure() 
+    gs = gridspec.GridSpec(2, 2)
+
+    gen_boxplot(sys.argv[1], 24, 0)
+    gen_boxplot(sys.argv[1], 32, 1)
+    gen_boxplot(sys.argv[1], 36, 2)
+    gen_boxplot(sys.argv[1], 40, 3)
+    gen_boxplot(sys.argv[1], 36, 3)
+
+    # fig.add_subplot(fuj1) 
+    # fig.add_subplot(fuj2) 
+    # fig.add_subplot(fuj3) 
+    # fig.add_subplot(fuj4) 
+    plt.savefig('Fujita Large.png')
 
