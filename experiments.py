@@ -4,7 +4,6 @@ import sys
 n_dags = 30
 small_machines = [4,8,16]
 timeout = 60
-timeout_skip = 12
 bounds = {"Fujita": [],
           "Fernandez": ["FB=1"]}
 
@@ -33,7 +32,7 @@ def bbexps(path, m, t):
     return result
 
 
-def runSeries():
+def runSmall():
     n_dags = 30
     machines = [4,8,16]
     timeout_skip = 12
@@ -55,21 +54,22 @@ def runSeries():
                     if n_timeouts >= timeout_skip:
                         break
 
-def run100():
-    n_dags = 50
-    machines = [12, 16, 20, 24, 28, 32]
+def runLarge():
+    n_dags = 16
+    machines = [24, 28, 32, 36, 40]
     for bound in bounds:
         make_clean()
         make(bounds[bound])
-        for m in machines:
-            for dag in range(n_dags):
-                path = "data100/Pat{}.rcp".format(dag)
-                result = bbexps(path, m, timeout)
-                print("{}, {}".format(result.stdout[:-1], bound))
+        for size in range(100, 155, 5):
+            for m in machines:
+                for dag in range(n_dags):
+                    path = "large_data/data{}01/Pat{}.rcp".format(size, dag)
+                    result = bbexps(path, m, timeout)
+                    print("{}, {}".format(result.stdout[:-1], bound))
 
 def main():
-    run100()
-    runSeries()
+    runLarge()
+    #runSmall()
 
 if __name__ == "__main__":
     main()

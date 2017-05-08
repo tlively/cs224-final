@@ -72,13 +72,13 @@ def gen_graphs(fp):
                 else:
                     print("no data", m, bound, ns[nidx], fails, succs)
         fig, ax = plt.subplots()
-        width = .8 / len(bounds)
+        width = .8 * (ns[1] - ns[0]) / len(bounds)
         rects = [ax.bar([n+width*i for n in ns], percents[bounds[i]], width)
                  for i in range(len(bounds))]
         ax.set_ylabel("Percent completed")
         ax.set_xlabel("number of vertices")
         ax.set_title("Percent of DAGs scheduled in 1 minute (m = {})".format(m))
-        ax.set_xticks([n + .4 / len(bounds) for n in ns])
+        ax.set_xticks([n + .4 for n in ns])
         ax.set_xticklabels([str(n) for n in ns])
         ax.legend(rects, bounds)
 
@@ -115,7 +115,7 @@ def gen_boxplot(fp, b='Fujita', m=16):
 
             if schedule_length < 0:
                 timed_out_nodes[node - 12] += 1
-            
+
             times.append(scheduling_time)
             if node in nodes.keys():
                 nodes[node].append(scheduling_time)
@@ -170,26 +170,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: {} <file>".format(sys.argv[0]))
         sys.exit(1)
-    # fuj16 = gen_boxplot(sys.argv[1], b='Fujita', m=16)
+
     fuj20 = gen_machineplot(sys.argv[1])
     fuj20.show()
-# fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
 
-# meanpointprops = dict(marker='D', markeredgecolor='black',
-#                       markerfacecolor='firebrick')
-
-# axes[0, 0].boxplot(np.array([[1,2,3,4],[3,6,3,7]]), meanprops=meanpointprops, meanline=False,
-#                    showmeans=True)
-# axes[0, 0].set_title('Default', fontsize=fs)
-
-# axes[0, 1].boxplot([[1,2,3,4],[3,6,3,7]], meanprops=meanpointprops, meanline=False,
-#                    showmeans=True)
-# axes[0, 1].set_title('Default', fontsize=fs)
-
-# for ax in axes.flatten():
-#     ax.set_yscale('log')
-#     ax.set_yticklabels([])
-
-# fig.subplots_adjust(hspace=0.4)
-# plt.title('Results')
-# plt.show()
